@@ -167,11 +167,11 @@ public class AccountService {
     }
 
     private void validateRrspEligibility(Customer customer, BigDecimal interestRate) {
-        if (interestRate != null) {
-            throw new UnprocessableException("INVALID_INTEREST_RATE",
-                    "interestRate is not applicable for RRSP accounts — it is derived from the GIC term",
-                    "interestRate");
-        }
+//        if (interestRate != null) {
+//            throw new UnprocessableException("INVALID_INTEREST_RATE",
+//                    "interestRate is not applicable for RRSP accounts — it is derived from the GIC term",
+//                    "interestRate");
+//        }
         if (!customer.isKycVerified()) {
             throw new UnprocessableException("KYC_REQUIRED",
                     "Customer must be KYC verified to open an RRSP account", "kyc");
