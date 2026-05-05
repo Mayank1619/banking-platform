@@ -44,8 +44,8 @@ describe('account and customer api wrappers', () => {
     })).resolves.toEqual({ accountId: 10 });
     expect(accountApiClient.post).toHaveBeenCalledWith('/customers/44/accounts', {
       accountType: 'SAVINGS',
-      balance: '100.00',
-      interestRate: '0.0500'
+      balance: 100,
+      interestRate: 0.05
     });
 
     await updateAccount({ accountId: '10', interestRate: '' });

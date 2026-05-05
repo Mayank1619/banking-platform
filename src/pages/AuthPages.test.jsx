@@ -175,7 +175,7 @@ describe('auth pages', () => {
     await waitFor(() => {
       expect(registerUser).toHaveBeenCalledWith({ username: 'user@example.com', password: 'secret' });
       expect(loginUser).toHaveBeenCalledWith({ username: 'user@example.com', password: 'secret' });
-      expect(createCustomer).toHaveBeenCalledWith({ name: 'New Customer', address: '1 Main St', type: 'PERSON' }, 'token');
+      expect(createCustomer).toHaveBeenCalledWith({ name: 'New Customer', address: '1 Main St', type: 'PERSON', dateOfBirth: '1998-10-26', kycVerified: true }, 'token');
       expect(mockCompleteLogin).toHaveBeenCalledWith({ accessToken: 'token' }, 'user@example.com');
       expect(mockRememberCustomerId).toHaveBeenCalledWith('88');
       expect(mockNavigate).toHaveBeenCalledWith('/customer/88/accounts', {
