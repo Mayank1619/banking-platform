@@ -1,43 +1,107 @@
 import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { deleteAccount } from '../api/accounts';
+import { closeRrspAccount, deleteAccount, getGics, openGic, redeemGic } from '../api/accounts';
 import { mapAxiosError } from '../api/axiosClient';
 import { useGetAccount } from '../hooks/useGetAccount';
+
+const GIC_TERM_LABELS = {
+  SIX_MONTHS: '6 Month Term',
+  ONE_YEAR: '1 Year Term',
+  TWO_YEARS: '2 Year Term',
+  THREE_YEARS: '3 Year Term',
+  FIVE_YEARS: '5 Year Term'
+};
+
+const GIC_TERMS = ['SIX_MONTHS', 'ONE_YEAR', 'TWO_YEARS', 'THREE_YEARS', 'FIVE_YEARS'];
 
 export function AccountDetailPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { accountId } = useParams();
+  const queryClient = useQueryClient();
   const [error, setError] = useState(null);
+  const [gicMessage, setGicMessage] = useState(null);
+  const [gicError, setGicError] = useState(null);
+  const [isGicModalOpen, setIsGicModalOpen] = useState(false);
+  const [gicForm, setGicForm] = useState({ amount: '', term: 'SIX_MONTHS' });
   const query = useGetAccount(accountId);
   const deleteAccountMutation = useMutation({ mutationFn: deleteAccount });
+  const closeRrspMutation = useMutation({ mutationFn: closeRrspAccount });
+  const openGicMutation = useMutation({ mutationFn: ({ id, payload }) => openGic(id, payload) });
+  const redeemGicMutation = useMutation({ mutationFn: ({ id, gicId }) => redeemGic(id, gicId) });
+
+  const account = query.data;
+  const isRrsp = account?.accountType === 'RRSP';
+
+  const gicQuery = useQuery({
+    queryKey: ['gics', accountId],
+    queryFn: () => getGics(accountId),
+    enabled: isRrsp && Boolean(accountId)
+  });
 
   async function handleDelete() {
-    if (!query.data) {
-      return;
-    }
-
+    if (!query.data) return;
     setError(null);
     try {
-      if (!window.confirm('Delete this account? This action is restricted to zero-balance accounts and cannot be undone from the UI.')) {
-        return;
-      }
-
+      if (!window.confirm('Delete this account? This action is restricted to zero-balance accounts and cannot be undone from the UI.')) return;
       const result = await deleteAccountMutation.mutateAsync(query.data.accountId);
       navigate(query.data.customerId ? `/customer/${query.data.customerId}/accounts` : '/', {
-        state: {
-          deletedAccountMessage: result.message || `Account ${query.data.accountId} has been deleted.`
-        }
+        state: { deletedAccountMessage: result.message || `Account ${query.data.accountId} has been deleted.` }
       });
     } catch (mutationError) {
       setError(mapAxiosError(mutationError));
     }
   }
 
-  const account = query.data;
+  async function handleCloseRrsp() {
+    if (!account) return;
+    setError(null);
+    try {
+      if (!window.confirm('Close this RRSP account? This action cannot be undone.')) return;
+      await closeRrspMutation.mutateAsync(accountId);
+      navigate(`/customer/${account.customerId}/accounts`, {
+        state: { deletedAccountMessage: `RRSP Account ${accountId} has been closed.` }
+      });
+    } catch (mutationError) {
+      setError(mapAxiosError(mutationError));
+    }
+  }
+
+  async function handleOpenGic(event) {
+    event.preventDefault();
+    setGicError(null);
+    setGicMessage(null);
+    try {
+      await openGicMutation.mutateAsync({ id: accountId, payload: gicForm });
+      setGicMessage(`GIC opened successfully using funds from RRSP ${accountId}.`);
+      setGicForm({ amount: '', term: 'SIX_MONTHS' });
+      setIsGicModalOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['gics', accountId] });
+      queryClient.invalidateQueries({ queryKey: ['account', accountId] });
+    } catch (mutationError) {
+      setGicError(mapAxiosError(mutationError));
+    }
+  }
+
+  async function handleRedeemGic(gicId) {
+    setGicError(null);
+    setGicMessage(null);
+    try {
+      await redeemGicMutation.mutateAsync({ id: accountId, gicId });
+      setGicMessage('GIC redeemed. Funds have been returned to your RRSP balance.');
+      queryClient.invalidateQueries({ queryKey: ['gics', accountId] });
+      queryClient.invalidateQueries({ queryKey: ['account', accountId] });
+    } catch (mutationError) {
+      setGicError(mapAxiosError(mutationError));
+    }
+  }
+
   const canDeleteAccount = Number(account?.balance) === 0;
   const queryError = query.error ? mapDeletedAccountError(query.error) : null;
+  const gics = Array.isArray(gicQuery.data) ? gicQuery.data
+    : Array.isArray(gicQuery.data?.gics) ? gicQuery.data.gics
+    : [];
 
   return (
     <div className="stack">
@@ -53,7 +117,11 @@ export function AccountDetailPage() {
             </div>
             <div className="actions">
               <Link className="button-link subtle" to={`/customer/${account.customerId}/accounts`}>Back to Account List</Link>
-              <button type="button" className="secondary danger" onClick={handleDelete} disabled={deleteAccountMutation.isPending || !canDeleteAccount}>Delete Account</button>
+              {isRrsp ? (
+                <button type="button" className="secondary danger" onClick={handleCloseRrsp} disabled={closeRrspMutation.isPending}>Close RRSP</button>
+              ) : (
+                <button type="button" className="secondary danger" onClick={handleDelete} disabled={deleteAccountMutation.isPending || !canDeleteAccount}>Delete Account</button>
+              )}
             </div>
           </div>
           <div style={{ display: 'flex', gap: '3rem', padding: '2.25rem 3rem', background: 'var(--color-surface, #f8f9fa)', borderRadius: '12px', border: '1px solid var(--color-border, #e2e6ea)', margin: '0.5rem 0 1.5rem 0', width: '100%', boxSizing: 'border-box', boxShadow: '0 2px 16px 0 rgba(0,0,0,0.04)' }}>
@@ -74,23 +142,205 @@ export function AccountDetailPage() {
             <Link className="button-link subtle" to={`/accounts/${account.accountId}/statements`}>Monthly Statement</Link>
             <Link className="button-link subtle" to={`/accounts/${account.accountId}/insights`}>Spending Insights</Link>
           </div>
-          {!canDeleteAccount ? <p className="muted compact-text">Balance must be exactly zero to delete this account.</p> : null}
+          {!isRrsp && !canDeleteAccount ? <p className="muted compact-text">Balance must be exactly zero to delete this account.</p> : null}
           {location.pathname.endsWith('/edit') ? <div className="banner success">You are viewing the edit route for this account.</div> : null}
         </section>
+      ) : null}
+
+      {isRrsp ? (
+        <section className="panel stack" style={{ background: 'var(--color-surface-alt, #f0f4f8)' }}>
+          <div className="section-header">
+            <div>
+              <h3 style={{ margin: 0 }}>GIC Portfolio</h3>
+              <p className="muted" style={{ margin: '0.25rem 0 0 0' }}>Guaranteed Investment Certificates linked to this RRSP.</p>
+            </div>
+            <button type="button" onClick={() => { setGicError(null); setGicMessage(null); setIsGicModalOpen(true); }}>
+              Open GIC from this Account
+            </button>
+          </div>
+
+          {gicMessage ? <div className="banner success">{gicMessage}</div> : null}
+          {gicError ? <div className="banner error">{gicError.message}</div> : null}
+
+          {gicQuery.isLoading ? <div className="banner success">Loading GICs...</div> : null}
+
+          {gics.length > 0 ? (
+            <section className="table-shell gic-table-shell">
+              <table>
+                <thead>
+                  <tr>
+                    <th>GIC ID</th>
+                    <th className="col-number">Amount</th>
+                    <th className="col-number">Interest Rate</th>
+                    <th>Term</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {gics.map((gic) => (
+                    <tr key={gic.gicId ?? gic.id}>
+                      <td>{gic.gicId ?? gic.id}</td>
+                      <td className="col-number">${gic.principalAmount ?? gic.amount}</td>
+                      <td className="col-number">{gic.interestRate != null ? `${(gic.interestRate * 100).toFixed(2)}%` : '—'}</td>
+                      <td>{GIC_TERM_LABELS[gic.term] || gic.term}</td>
+                      <td><span className="badge success-badge">{gic.status}</span></td>
+                      <td>
+                        <button
+                          type="button"
+                          className="secondary btn-redeem"
+                          onClick={() => handleRedeemGic(gic.gicId ?? gic.id)}
+                          disabled={redeemGicMutation.isPending}
+                        >
+                          Redeem
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </section>
+          ) : !gicQuery.isLoading ? (
+            <div className="panel gic-empty-panel">
+              <p className="muted" style={{ margin: 0 }}>No active GIC investments for this RRSP.</p>
+              <button type="button" onClick={() => { setGicError(null); setGicMessage(null); setIsGicModalOpen(true); }}>Open your first GIC</button>
+            </div>
+          ) : null}
+
+        </section>
+      ) : null}
+
+      {isGicModalOpen ? (
+        <div className="modal-backdrop" onClick={() => setIsGicModalOpen(false)}>
+          <div className="modal-panel stack" role="dialog" aria-modal="true" aria-labelledby="gic-modal-title" onClick={(e) => e.stopPropagation()}>
+            <div className="section-header">
+              <h3 id="gic-modal-title">Open a GIC</h3>
+              <button type="button" className="secondary" onClick={() => setIsGicModalOpen(false)} disabled={openGicMutation.isPending}>Close</button>
+            </div>
+            {gicError ? <div className="banner error">{gicError.message}</div> : null}
+            <form className="stack" onSubmit={handleOpenGic}>
+              <div className="form-grid">
+                <div className="field">
+                  <label htmlFor="gic-amount">Amount</label>
+                  <input
+                    id="gic-amount"
+                    value={gicForm.amount}
+                    onChange={(e) => setGicForm((f) => ({ ...f, amount: e.target.value }))}
+                    placeholder="e.g. 1000.00"
+                  />
+                  <p className="field-hint">Will be deducted from your RRSP balance.</p>
+                </div>
+                <div className="field">
+                  <label htmlFor="gic-term">Term</label>
+                  <select
+                    id="gic-term"
+                    value={gicForm.term}
+                    onChange={(e) => setGicForm((f) => ({ ...f, term: e.target.value }))}
+                  >
+                    {GIC_TERMS.map((t) => (
+                      <option key={t} value={t}>{GIC_TERM_LABELS[t] || t}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="actions centered-actions">
+                <button type="submit" disabled={openGicMutation.isPending}>Open GIC</button>
+                <button type="button" className="secondary" onClick={() => setGicForm({ amount: '', term: 'SIX_MONTHS' })} disabled={openGicMutation.isPending}>Reset</button>
+              </div>
+            </form>
+          </div>
+        </div>
       ) : null}
     </div>
   );
 }
 
-function mapDeletedAccountError(error) {
-  const mapped = mapAxiosError(error);
+// export function AccountDetailPage() {
+//   const navigate = useNavigate();
+//   const location = useLocation();
+//   const { accountId } = useParams();
+//   const [error, setError] = useState(null);
+//   const query = useGetAccount(accountId);
+//   const deleteAccountMutation = useMutation({ mutationFn: deleteAccount });
 
-  if (mapped.code === 'ACCOUNT_NOT_FOUND' || mapped.message === 'Account not found') {
-    return {
-      ...mapped,
-      message: 'This account may have been deleted or is no longer accessible.'
-    };
-  }
+//   async function handleDelete() {
+//     if (!query.data) {
+//       return;
+//     }
 
-  return mapped;
-}
+//     setError(null);
+//     try {
+//       if (!window.confirm('Delete this account? This action is restricted to zero-balance accounts and cannot be undone from the UI.')) {
+//         return;
+//       }
+
+//       const result = await deleteAccountMutation.mutateAsync(query.data.accountId);
+//       navigate(query.data.customerId ? `/customer/${query.data.customerId}/accounts` : '/', {
+//         state: {
+//           deletedAccountMessage: result.message || `Account ${query.data.accountId} has been deleted.`
+//         }
+//       });
+//     } catch (mutationError) {
+//       setError(mapAxiosError(mutationError));
+//     }
+//   }
+
+//   const account = query.data;
+//   const canDeleteAccount = Number(account?.balance) === 0;
+//   const queryError = query.error ? mapDeletedAccountError(query.error) : null;
+
+//   return (
+//     <div className="stack">
+//       {query.isLoading ? <div className="banner success">Loading account...</div> : null}
+//       {error ? <div className="banner error">{error.message}</div> : null}
+//       {queryError ? <div className="banner error">{queryError.message}</div> : null}
+//       {account ? (
+//         <section className="panel stack">
+//           <div className="section-header">
+//             <div>
+//               <h2 style={{ margin: 0, fontSize: '1.75rem' }}>Account Overview</h2>
+//               <p className="muted" style={{ margin: '0.25rem 0 0 0' }}>View your account balance and access account features.</p>
+//             </div>
+//             <div className="actions">
+//               <Link className="button-link subtle" to={`/customer/${account.customerId}/accounts`}>Back to Account List</Link>
+//               <button type="button" className="secondary danger" onClick={handleDelete} disabled={deleteAccountMutation.isPending || !canDeleteAccount}>Delete Account</button>
+//             </div>
+//           </div>
+//           <div style={{ display: 'flex', gap: '3rem', padding: '2.25rem 3rem', background: 'var(--color-surface, #f8f9fa)', borderRadius: '12px', border: '1px solid var(--color-border, #e2e6ea)', margin: '0.5rem 0 1.5rem 0', width: '100%', boxSizing: 'border-box', boxShadow: '0 2px 16px 0 rgba(0,0,0,0.04)' }}>
+//             <div style={{ flex: 1, textAlign: 'center' }}>
+//               <p className="muted" style={{ margin: '0 0 0.4rem 0', fontSize: '1rem', textAlign: 'center' }}>Account Type</p>
+//               <p style={{ margin: 0, fontSize: '2.5rem', fontWeight: 700, lineHeight: 1, textAlign: 'center' }}>{account.accountType}</p>
+//             </div>
+//             <div style={{ flex: 1, borderLeft: '1px solid var(--color-border, #e2e6ea)', paddingLeft: '3rem', textAlign: 'center' }}>
+//               <p className="muted" style={{ margin: '0 0 0.4rem 0', fontSize: '1rem', textAlign: 'center' }}>Balance</p>
+//               <p style={{ margin: 0, fontSize: '2.5rem', fontWeight: 700, lineHeight: 1, textAlign: 'center' }}>{account.balance}</p>
+//             </div>
+//           </div>
+//           <div className="section-divider" />
+//           <div className="actions">
+//             <Link className="button-link subtle" to={`/accounts/transfer?fromAccountId=${account.accountId}`}>Transfer Funds</Link>
+//             <Link className="button-link subtle" to={`/accounts/${account.accountId}/transactions`}>Transaction History</Link>
+//             <Link className="button-link subtle" to={`/accounts/${account.accountId}/standing-orders`}>Standing Orders</Link>
+//             <Link className="button-link subtle" to={`/accounts/${account.accountId}/statements`}>Monthly Statement</Link>
+//             <Link className="button-link subtle" to={`/accounts/${account.accountId}/insights`}>Spending Insights</Link>
+//           </div>
+//           {!canDeleteAccount ? <p className="muted compact-text">Balance must be exactly zero to delete this account.</p> : null}
+//           {location.pathname.endsWith('/edit') ? <div className="banner success">You are viewing the edit route for this account.</div> : null}
+//         </section>
+//       ) : null}
+//     </div>
+//   );
+// }
+
+// function mapDeletedAccountError(error) {
+//   const mapped = mapAxiosError(error);
+
+//   if (mapped.code === 'ACCOUNT_NOT_FOUND' || mapped.message === 'Account not found') {
+//     return {
+//       ...mapped,
+//       message: 'This account may have been deleted or is no longer accessible.'
+//     };
+//   }
+
+//   return mapped;
+// }

@@ -9,14 +9,23 @@ function buildIdempotencyHeaders(idempotencyKey) {
   };
 }
 
+export async function getInterestRates() {
+  const response = await accountApiClient.get('/api/interest-rates');
+  return response.data;
+}
+
 export async function createAccount(payload) {
   const body = {
     accountType: payload.accountType,
-    balance: payload.balance
+    balance: parseFloat(payload.balance)
   };
 
-  if (payload.accountType === 'SAVINGS') {
-    body.interestRate = payload.interestRate;
+  if (payload.accountType === 'SAVINGS' || payload.accountType === 'TFSA' || payload.accountType === 'RRSP') {
+    body.interestRate = parseFloat(payload.interestRate);
+  }
+
+  if (payload.accountType === 'TFSA' && payload.dateOfBirth) {
+    body.dateOfBirth = payload.dateOfBirth;
   }
 
   const response = await accountApiClient.post(`/customers/${payload.customerId}/accounts`, body);
@@ -30,7 +39,11 @@ export async function getAccount(accountId) {
 
 export async function listCustomerAccounts(customerId) {
   const response = await accountApiClient.get(`/customers/${customerId}/accounts`);
-  return response.data;
+  const data = response.data;
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.accounts)) return data.accounts;
+  if (Array.isArray(data?.content)) return data.content;
+  return [];
 }
 
 export async function updateAccount(payload) {
@@ -77,6 +90,29 @@ export async function withdrawFromAccount(payload) {
     },
     buildIdempotencyHeaders(payload.idempotencyKey)
   );
+  return response.data;
+}
+
+export async function getGics(accountId) {
+  const response = await accountApiClient.get(`/accounts/${accountId}/gic`);
+  return response.data;
+}
+
+export async function openGic(accountId, payload) {
+  const response = await accountApiClient.post(`/accounts/${accountId}/gic`, {
+    amount: payload.amount,
+    term: payload.term
+  });
+  return response.data;
+}
+
+export async function redeemGic(accountId, gicId) {
+  const response = await accountApiClient.post(`/accounts/${accountId}/gic/${gicId}/redeem`);
+  return response.data;
+}
+
+export async function closeRrspAccount(accountId) {
+  const response = await accountApiClient.post(`/accounts/${accountId}/close`);
   return response.data;
 }
 

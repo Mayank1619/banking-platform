@@ -1,12 +1,15 @@
 import { Fragment, useState, useEffect } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { createAccount } from '../api/accounts';
+import { createAccount, getInterestRates } from '../api/accounts';
 import { getCustomer, listCustomers } from '../api/customers';
 import { mapAxiosError } from '../api/axiosClient';
 import { useAuth } from '../auth/AuthContext';
 import { useListCustomerAccounts } from '../hooks/useListCustomerAccounts';
 import { ACCOUNT_TYPES, emptyCreateAccountForm } from '../types';
+
+// Set to false to test KYC error boundaries
+const MOCK_KYC_VERIFIED = true;
 
 export function AccountListPage() {
   const location = useLocation();
@@ -40,6 +43,10 @@ export function AccountListPage() {
     enabled: isAdmin
   });
   const createAccountMutation = useMutation({ mutationFn: createAccount });
+  const interestRatesQuery = useQuery({
+    queryKey: ['interest-rates'],
+    queryFn: getInterestRates
+  });
 
   const deletedAccountMessage = location.state?.deletedAccountMessage || null;
   const flashMessage = location.state?.flash || null;
@@ -56,14 +63,20 @@ export function AccountListPage() {
         ...formState,
         customerId,
         balance: formState.balance,
-        interestRate: formState.interestRate
+        interestRate: formState.interestRate,
+        ...(formState.accountType === 'TFSA' ? { dateOfBirth: customerQuery.data?.dateOfBirth } : {})
       });
       setActionMessage(`Account ${createdAccount.accountId} created successfully.`);
       setFormState(emptyCreateAccountForm);
       setIsCreateModalOpen(false);
       await Promise.all([query.refetch(), customerQuery.refetch()]);
     } catch (mutationError) {
-      setError(mapAxiosError(mutationError));
+      const mapped = mapAxiosError(mutationError);
+      if (mapped.code === 'TFSA_ALREADY_EXISTS') {
+        setError({ ...mapped, message: 'You already have an active TFSA account.' });
+      } else {
+        setError(mapped);
+      }
     }
   }
 
@@ -79,7 +92,15 @@ export function AccountListPage() {
     navigate(`/customer/${nextCustomerId}/accounts`);
   }
 
-  const showInterestRate = formState.accountType === 'SAVINGS';
+  const showInterestRate = formState.accountType === 'SAVINGS' || formState.accountType === 'TFSA' || formState.accountType === 'RRSP';
+  const isTfsa = formState.accountType === 'TFSA';
+  const customerDateOfBirth = customerQuery.data?.dateOfBirth || null;
+  const customerKycVerified = MOCK_KYC_VERIFIED;
+  const age = calculateAge(customerDateOfBirth);
+  const isTooYoung = isTfsa && age !== null && age < 18;
+  const isKycBlocked = isTfsa && !customerKycVerified;
+  const tfsaRate = interestRatesQuery.data?.TFSA ?? interestRatesQuery.data?.tfsa ?? null;
+  const rrspRate = interestRatesQuery.data?.RRSP ?? interestRatesQuery.data?.rrsp ?? null;
 
   function openCreateModal() {
     setError(null);
@@ -144,10 +165,16 @@ export function AccountListPage() {
                 {query.data.map((account) => (
                   <Link key={account.accountId} className="account-card" to={`/accounts/${account.accountId}`}>
                     <div className="account-card-header">
-                      <span className="account-card-type">{account.accountType}</span>
+                      <span className="account-card-type">
+                        {account.accountType}
+                        {account.accountType === 'TFSA' ? <span className="badge" style={{ marginLeft: '0.4rem' }}>Tax-Free</span> : null}
+                      </span>
                       <span className="account-card-id">{account.accountId}</span>
                     </div>
                     <span className="account-card-balance">${account.balance}</span>
+                    {account.accountType === 'TFSA' && tfsaRate !== null ? (
+                      <span className="field-hint">{tfsaRate}% APY</span>
+                    ) : null}
                   </Link>
                 ))}
                 <div className="account-card account-card-total">
@@ -175,6 +202,12 @@ export function AccountListPage() {
               <button type="button" className="secondary" onClick={closeCreateModal} disabled={createAccountMutation.isPending}>Close</button>
             </div>
             <form className="stack" onSubmit={handleCreateAccount}>
+              {isKycBlocked ? (
+                <div className="banner error">Identity verification required for this account type.</div>
+              ) : null}
+              {isTooYoung ? (
+                <div className="banner error">TFSA requires a minimum age of 18.</div>
+              ) : null}
               <div className="form-grid">
                 <div className="field">
                   <label htmlFor="accountType">Account Type</label>
@@ -184,12 +217,18 @@ export function AccountListPage() {
                     onChange={(event) => setFormState((current) => ({ ...current, accountType: event.target.value }))}
                   >
                     {ACCOUNT_TYPES.map((type) => (
-                      <option key={type} value={type}>{type}</option>
+                      <option key={type} value={type} disabled={type === 'TFSA' && !customerKycVerified}>{type}</option>
                     ))}
                   </select>
+                  {isTfsa && tfsaRate !== null ? (
+                    <p className="field-hint">Current TFSA rate: {tfsaRate}% APY</p>
+                  ) : null}
+                  {formState.accountType === 'RRSP' && rrspRate !== null ? (
+                    <p className="field-hint">Current RRSP rate: {rrspRate}% APY</p>
+                  ) : null}
                 </div>
                 <div className="field">
-                  <label htmlFor="balance">Opening Balance</label>
+                  <label htmlFor="balance">{isTfsa ? 'Initial Contribution' : 'Opening Balance'}</label>
                   <input
                     id="balance"
                     value={formState.balance}
@@ -208,7 +247,7 @@ export function AccountListPage() {
                 ) : null}
               </div>
               <div className="actions centered-actions">
-                <button type="submit" disabled={createAccountMutation.isPending}>Create Account</button>
+                <button type="submit" disabled={createAccountMutation.isPending || isTooYoung || isKycBlocked}>Create Account</button>
                 <button
                   type="button"
                   className="secondary"
@@ -230,6 +269,19 @@ export function AccountListPage() {
       </div>
     </>
   );
+}
+
+function calculateAge(dateOfBirth) {
+  if (!dateOfBirth) return null;
+  const dob = new Date(dateOfBirth);
+  if (isNaN(dob.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const monthDiff = today.getMonth() - dob.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+    age--;
+  }
+  return age;
 }
 
 function mapDeletedCustomerAccountsError(error) {

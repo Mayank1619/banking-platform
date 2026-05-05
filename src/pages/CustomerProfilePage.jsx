@@ -210,6 +210,16 @@ export function CustomerProfilePage() {
             />
             <p className="field-hint">Contact support to update this information.</p>
           </div>
+          <div className="field">
+            <label htmlFor="profile-dob">Date of Birth</label>
+            <input
+              id="profile-dob"
+              type="date"
+              value={customer?.dateOfBirth || ''}
+              disabled
+              readOnly
+            />
+          </div>
         </div>
       </div>
 

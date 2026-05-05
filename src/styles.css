@@ -473,6 +473,7 @@ h1, h2, h3 {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
+  align-items: start;
 }
 
 .field {
@@ -736,6 +737,44 @@ a.account-card:hover {
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
+}
+
+/* ── GIC Table Shell ──────────────────────────────────────────── */
+.gic-table-shell {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.gic-table-shell .col-number {
+  text-align: right;
+}
+
+.gic-table-shell .btn-redeem:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+
+.gic-empty-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2.5rem 2rem;
+  text-align: center;
+}
+
+.badge.success-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(4, 108, 78, 0.1);
+  color: #034c37;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
 .actions-dropdown {

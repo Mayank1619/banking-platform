@@ -12,6 +12,9 @@ const REGISTER_CUSTOMER_TYPE_LABELS = {
   COMPANY: 'Business'
 };
 
+// Set to false to test KYC error boundaries
+const KYC_VERIFIED_DEFAULT = true;
+
 export function RegisterPage() {
   const navigate = useNavigate();
   const { completeLogin, rememberCustomerId } = useAuth();
@@ -26,7 +29,9 @@ export function RegisterPage() {
       const customerPayload = {
         name: form.name,
         address: form.address,
-        type: form.type
+        type: form.type,
+        dateOfBirth: form.dateOfBirth || '1998-10-26',
+        kycVerified: KYC_VERIFIED_DEFAULT
       };
 
       await registerUser(authPayload);
@@ -167,6 +172,16 @@ export function RegisterPage() {
                   value={formState.address}
                   onChange={(event) => setFormState((current) => ({ ...current, address: event.target.value }))}
                 />
+              </div>
+              <div className="field">
+                <label htmlFor="register-dob">Date of Birth</label>
+                <input
+                  id="register-dob"
+                  type="date"
+                  value={formState.dateOfBirth}
+                  onChange={(event) => setFormState((current) => ({ ...current, dateOfBirth: event.target.value }))}
+                />
+                <p className="field-hint">Required for TFSA accounts. Defaults to 1998-10-26 if left blank.</p>
               </div>
             </div>
           )}

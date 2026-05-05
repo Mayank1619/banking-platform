@@ -1,4 +1,4 @@
-export const ACCOUNT_TYPES = ['CHECKING', 'SAVINGS'];
+export const ACCOUNT_TYPES = ['CHECKING', 'SAVINGS', 'TFSA', 'RRSP'];
 export const ACCOUNT_STATUSES = ['ACTIVE', 'CLOSED'];
 export const CUSTOMER_TYPES = ['PERSON', 'COMPANY'];
 export const STANDING_ORDER_FREQUENCIES = ['DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY'];
@@ -75,7 +75,8 @@ export const emptyRegisterForm = {
   password: '',
   name: '',
   address: '',
-  type: 'PERSON'
+  type: 'PERSON',
+  dateOfBirth: ''
 };
 
 export const emptyLoginForm = {
@@ -86,7 +87,8 @@ export const emptyLoginForm = {
 export const emptyCustomerForm = {
   name: '',
   address: '',
-  type: 'PERSON'
+  type: 'PERSON',
+  dateOfBirth: ''
 };
 
 export const emptyCustomerLookup = {
