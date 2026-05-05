@@ -58,6 +58,11 @@ export function AccountListPage() {
     setError(null);
     setActionMessage(null);
 
+    if (existingTypes.has(formState.accountType)) {
+      setError({ message: `You already have an active ${formState.accountType} account.` });
+      return;
+    }
+
     try {
       const createdAccount = await createAccountMutation.mutateAsync({
         ...formState,
@@ -92,7 +97,10 @@ export function AccountListPage() {
     navigate(`/customer/${nextCustomerId}/accounts`);
   }
 
-  const showInterestRate = formState.accountType === 'SAVINGS' || formState.accountType === 'TFSA' || formState.accountType === 'RRSP';
+  const showInterestRate = formState.accountType === 'SAVINGS' || formState.accountType === 'TFSA';
+  const showBalance = formState.accountType !== 'RRSP';
+  const existingTypes = new Set((query.data || []).map((a) => a.accountType));
+  const isDuplicateType = existingTypes.has(formState.accountType);
   const isTfsa = formState.accountType === 'TFSA';
   const customerDateOfBirth = customerQuery.data?.dateOfBirth || null;
   const customerKycVerified = MOCK_KYC_VERIFIED;
@@ -124,7 +132,7 @@ export function AccountListPage() {
         {deletedAccountMessage ? <div className="banner success">{deletedAccountMessage}</div> : null}
         {flashMessage ? <div className="banner info">{flashMessage}</div> : null}
         {actionMessage ? <div className="banner success">{actionMessage}</div> : null}
-        {error ? <div className="banner error">{error.message}</div> : null}
+        {error && !isCreateModalOpen ? <div className="banner error">{error.message}</div> : null}
         {query.isLoading ? <div className="banner success">Loading accounts...</div> : null}
         {accountsError ? <div className="banner error">{accountsError.message}</div> : null}
         {customerError ? <div className="banner error">{customerError.message}</div> : null}
@@ -202,13 +210,14 @@ export function AccountListPage() {
               <button type="button" className="secondary" onClick={closeCreateModal} disabled={createAccountMutation.isPending}>Close</button>
             </div>
             <form className="stack" onSubmit={handleCreateAccount}>
+              {error ? <div className="banner error">{error.message}</div> : null}
               {isKycBlocked ? (
                 <div className="banner error">Identity verification required for this account type.</div>
               ) : null}
               {isTooYoung ? (
                 <div className="banner error">TFSA requires a minimum age of 18.</div>
               ) : null}
-              <div className="form-grid">
+              <div className="stack">
                 <div className="field">
                   <label htmlFor="accountType">Account Type</label>
                   <select
@@ -227,14 +236,16 @@ export function AccountListPage() {
                     <p className="field-hint">Current RRSP rate: {rrspRate}% APY</p>
                   ) : null}
                 </div>
-                <div className="field">
-                  <label htmlFor="balance">{isTfsa ? 'Initial Contribution' : 'Opening Balance'}</label>
-                  <input
-                    id="balance"
-                    value={formState.balance}
-                    onChange={(event) => setFormState((current) => ({ ...current, balance: event.target.value }))}
-                  />
-                </div>
+                {showBalance ? (
+                  <div className="field">
+                    <label htmlFor="balance">{isTfsa ? 'Initial Contribution' : 'Opening Balance'}</label>
+                    <input
+                      id="balance"
+                      value={formState.balance}
+                      onChange={(event) => setFormState((current) => ({ ...current, balance: event.target.value }))}
+                    />
+                  </div>
+                ) : null}
                 {showInterestRate ? (
                   <div className="field">
                     <label htmlFor="interestRate">Interest Rate</label>

@@ -13,6 +13,20 @@ const GIC_TERM_LABELS = {
   FIVE_YEARS: '5 Year Term'
 };
 
+const GIC_TERM_RATES = {
+  SIX_MONTHS: 3,
+  ONE_YEAR: 3.5,
+  TWO_YEARS: 4,
+  THREE_YEARS: 4.5,
+  FIVE_YEARS: 5
+};
+
+function gicTermOptionLabel(term) {
+  const label = GIC_TERM_LABELS[term] || term;
+  const rate = GIC_TERM_RATES[term];
+  return rate != null ? `${label} with ${rate.toFixed(2)}%` : label;
+}
+
 const GIC_TERMS = ['SIX_MONTHS', 'ONE_YEAR', 'TWO_YEARS', 'THREE_YEARS', 'FIVE_YEARS'];
 
 export function AccountDetailPage() {
@@ -182,7 +196,7 @@ export function AccountDetailPage() {
                     <tr key={gic.gicId ?? gic.id}>
                       <td>{gic.gicId ?? gic.id}</td>
                       <td className="col-number">${gic.principalAmount ?? gic.amount}</td>
-                      <td className="col-number">{gic.interestRate != null ? `${(gic.interestRate * 100).toFixed(2)}%` : '—'}</td>
+                      <td className="col-number">{GIC_TERM_RATES[gic.term] != null ? `${GIC_TERM_RATES[gic.term].toFixed(2)}%` : gic.interestRate != null ? `${(gic.interestRate * 100).toFixed(2)}%` : '—'}</td>
                       <td>{GIC_TERM_LABELS[gic.term] || gic.term}</td>
                       <td><span className="badge success-badge">{gic.status}</span></td>
                       <td>
@@ -219,7 +233,7 @@ export function AccountDetailPage() {
             </div>
             {gicError ? <div className="banner error">{gicError.message}</div> : null}
             <form className="stack" onSubmit={handleOpenGic}>
-              <div className="form-grid">
+              <div className="stack">
                 <div className="field">
                   <label htmlFor="gic-amount">Amount</label>
                   <input
@@ -238,7 +252,7 @@ export function AccountDetailPage() {
                     onChange={(e) => setGicForm((f) => ({ ...f, term: e.target.value }))}
                   >
                     {GIC_TERMS.map((t) => (
-                      <option key={t} value={t}>{GIC_TERM_LABELS[t] || t}</option>
+                      <option key={t} value={t}>{gicTermOptionLabel(t)}</option>
                     ))}
                   </select>
                 </div>

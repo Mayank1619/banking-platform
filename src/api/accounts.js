@@ -20,7 +20,10 @@ export async function createAccount(payload) {
     balance: parseFloat(payload.balance)
   };
 
-  if (payload.accountType === 'SAVINGS' || payload.accountType === 'TFSA' || payload.accountType === 'RRSP') {
+  if (payload.accountType === 'RRSP') {
+    body.balance = 0;
+    body.interestRate = 0.5;
+  } else if (payload.accountType === 'SAVINGS' || payload.accountType === 'TFSA') {
     body.interestRate = parseFloat(payload.interestRate);
   }
 

@@ -120,6 +120,8 @@ export function TransferPage() {
 
   return (
     <div className="stack">
+      {error ? <div className="banner error">{error.message}</div> : null}
+      {result ? <div className="banner success">{result.message || 'Transfer completed'}</div> : null}
       <section className="panel stack">
         <div>
           <h2>Transfer Funds</h2>
@@ -178,14 +180,7 @@ export function TransferPage() {
           <button type="submit" form="transfer-form" disabled={transferMutation.isPending}>Submit Transfer</button>
           <Link className="button-link subtle" to={form.fromAccountId ? `/accounts/${form.fromAccountId}` : '/'}>Back</Link>
         </div>
-        {error ? <div className="banner error">{error.message}</div> : null}
       </section>
-
-      {result ? (
-        <section className="panel">
-          <div className="banner success">{result.message || 'Transfer completed'}</div>
-        </section>
-      ) : null}
     </div>
   );
 }

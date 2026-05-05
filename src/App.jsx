@@ -279,12 +279,14 @@ function AppLayout() {
                     My Accounts
                   </NavLink>
                 )}
-                <NavLink
-                  className={() => `subnav-btn${pathname.startsWith('/accounts/transfer') ? ' active' : ''}`}
-                  to="/accounts/transfer"
-                >
-                  Transfer Funds
-                </NavLink>
+                {showFeatureButtons && (
+                  <NavLink
+                    className={() => `subnav-btn${pathname.startsWith('/accounts/transfer') ? ' active' : ''}`}
+                    to="/accounts/transfer"
+                  >
+                    Transfer Funds
+                  </NavLink>
+                )}
                 {showFeatureButtons && (
                   <>
                     <button
