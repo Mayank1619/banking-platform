@@ -5,6 +5,8 @@
 # Java / Maven
 target/
 *.class
+*.jar
+*.war
 
 # Eclipse / STS
 .classpath
@@ -12,9 +14,17 @@ target/
 .settings/
 .factorypath
 
+# IntelliJ / IDEs
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
 # Logs
 logs/
 *.log
+backend/logs/
 
 # Env
 .env

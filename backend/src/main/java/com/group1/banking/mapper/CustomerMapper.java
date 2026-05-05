@@ -10,7 +10,6 @@ import com.group1.banking.entity.Customer;
 import lombok.Builder;
 import lombok.Data;
 
-@Builder
 @Component
 public class CustomerMapper {
     public CustomerResponse toResponse(Customer customer) {
@@ -19,6 +18,8 @@ public class CustomerMapper {
             .name(customer.getName())
             .address(customer.getAddress())
             .type(customer.getType())
+            .dateOfBirth(customer.getDateOfBirth())
+            .kycVerified(customer.isKycVerified())
             .accounts(Collections.emptyList())
             .createdAt(customer.getCreatedAt())
             .updatedAt(customer.getUpdatedAt())

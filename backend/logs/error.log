@@ -1,3 +1,0 @@
-2026-04-23 10:20:08 ERROR - method=POST, uri=/api/auth/login, status=401, durationMs=85
-2026-04-23 10:20:09 ERROR - method=PATCH, uri=/api/customers/1, status=400, durationMs=5
-2026-04-23 10:20:11 ERROR - method=POST, uri=/api/auth/register, status=409, durationMs=3
