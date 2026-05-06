@@ -4,7 +4,7 @@ import { getCustomer } from '../api/customers';
 import { mapAxiosError } from '../api/axiosClient';
 import { useAuth } from '../auth/AuthContext';
 import { emptyCustomerLookup } from '../types';
-import offerImage1 from '../images/image_1.png';
+import offerImage1 from '../images/image_1.jpg';
 import offerImage2 from '../images/image_2.jpg';
 import offerImage3 from '../images/image_3.jpg';
 
