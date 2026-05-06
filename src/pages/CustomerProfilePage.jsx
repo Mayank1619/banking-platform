@@ -208,7 +208,6 @@ export function CustomerProfilePage() {
               disabled
               readOnly
             />
-            <p className="field-hint">Contact support to update this information.</p>
           </div>
           <div className="field">
             <label htmlFor="profile-dob">Date of Birth</label>
@@ -220,6 +219,7 @@ export function CustomerProfilePage() {
               readOnly
             />
           </div>
+          <p className="field-hint">Contact support to update this information.</p>
         </div>
       </div>
 

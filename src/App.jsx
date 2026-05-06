@@ -26,6 +26,8 @@ import { TransferPage } from './pages/TransferPage';
 import { WithdrawPage } from './pages/WithdrawPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
+import voltioIcon from './images/Voltio_icon.png';
+
 function getDefaultAuthenticatedRoute(authState) {
   const isAdmin = authState.roles.includes('ADMIN') || authState.roles.includes('ROLE_ADMIN');
 
@@ -69,7 +71,7 @@ function ProfileDropdown({ onClose }) {
       <button type="button" className="navbar-dropdown-item" onClick={handleProfile}>
         Profile
       </button>
-      <button type="button" className="navbar-dropdown-item danger" onClick={handleLogout}>
+      <button type="button" className="navbar-dropdown-item" onClick={handleLogout}>
         Log Out
       </button>
     </div>
@@ -183,7 +185,9 @@ function AppLayout() {
   return (
     <div className="app-shell">
       <header className="navbar">
-        <NavLink className="navbar-brand" to="/" style={{ textDecoration: 'none', color: 'inherit' }}>VOLTIO</NavLink>
+        <NavLink className="navbar-brand" to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <img src={voltioIcon} alt="Voltio" style={{ height: '48px', display: 'block' }} />
+        </NavLink>
         <div className="navbar-actions">
           {isAuthenticated ? (
             <div className="navbar-profile" ref={dropdownRef}>
@@ -202,7 +206,7 @@ function AppLayout() {
             </div>
           ) : (
             <>
-              <NavLink className="button-link subtle" to="/login">Login</NavLink>
+              <NavLink className="button-link" to="/login">Login</NavLink>
               <NavLink className="button-link" to="/register">Get Started</NavLink>
             </>
           )}

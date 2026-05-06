@@ -139,51 +139,16 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* {!isAuthenticated ? (
+      {!isAuthenticated ? (
         <Link className="big-get-started" to="/register">Get Started</Link>
       ) : (
         <section className="panel stack">
           <h3>Quick Navigation</h3>
           {isAdmin ? (
             <>
-              <div className="form-grid">
-                <div className="field">
-                  <label htmlFor="home-customer-id">Open Customer ID</label>
-                  <input
-                    id="home-customer-id"
-                    value={lookup.customerId}
-                    onChange={(event) => setLookup((current) => ({ ...current, customerId: event.target.value }))}
-                    placeholder={authState.customerId || 'Enter customer ID'}
-                  />
-                </div>
-                <div className="field">
-                  <label htmlFor="home-account-id">Open Account ID</label>
-                  <input
-                    id="home-account-id"
-                    value={lookup.accountId}
-                    onChange={(event) => setLookup((current) => ({ ...current, accountId: event.target.value }))}
-                    placeholder="Enter account ID"
-                  />
-                </div>
-              </div>
             </>
           ) : (
             <>
-              {!authState.customerId ? (
-                <div className="stack tight-gap">
-                  <div className="field">
-                    <label htmlFor="link-customer-id">Link Existing Customer ID</label>
-                    <input
-                      id="link-customer-id"
-                      value={lookup.customerId}
-                      onChange={(event) => setLookup((current) => ({ ...current, customerId: event.target.value }))}
-                      placeholder="Enter your customer ID"
-                    />
-                  </div>
-                  {linkError ? <div className="banner error">{linkError.message}</div> : null}
-                  {linkMessage ? <div className="banner success">{linkMessage}</div> : null}
-                </div>
-              ) : null}
             </>
           )}
           <div className="actions">
@@ -195,13 +160,13 @@ export function HomePage() {
             {!authState.customerId ? <Link className="button-link subtle" to="/customer/create">Create Customer</Link> : null}
           </div>
         </section>
-      )} */}
+      )}
 
       <footer className="overview-footer">
         <div className="footer-bottom-row">
-          <p className="footer-meta">© {currentYear} Digital Banking Platform</p>
+          <p className="footer-meta">© {currentYear} Voltio Platform</p>
           <div className="footer-center-info">
-            <p className="footer-meta">support@bankingplatform.local</p>
+            <p className="footer-meta">VoltioSupport@VoltioBank.ca</p>
             <p className="footer-meta">Mon-Fri, 8:00 AM to 6:00 PM</p>
           </div>
           <div className="footer-social" aria-label="Social media links">

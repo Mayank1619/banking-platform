@@ -55,8 +55,8 @@ body::before {
   align-items: center;
   padding: 0 2rem;
   height: 64px;
-  background: rgba(255, 250, 242, 0.95);
-  border-bottom: 1px solid var(--border);
+  background: #01614c;
+  border-bottom: none;
   backdrop-filter: blur(14px);
   position: sticky;
   top: 0;
@@ -66,7 +66,7 @@ body::before {
 .navbar-brand {
   font-size: 1.3rem;
   font-weight: 700;
-  color: var(--ink);
+  color: #faf3e9;
   letter-spacing: -0.02em;
 }
 
@@ -96,8 +96,8 @@ body::before {
   height: 36px;
   border-radius: 50%;
   padding: 0;
-  background: var(--accent);
-  border: 2px solid transparent;
+  background: #faf3e9;
+  border: 2px solid #faf3e9;
   cursor: pointer;
   flex-direction: column;
   align-items: center;
@@ -114,7 +114,7 @@ body::before {
 .navbar-avatar-initials {
   font-size: 0.85rem;
   font-weight: 700;
-  color: white;
+  color: #01614c;
   line-height: 1;
   pointer-events: none;
 }
@@ -1367,8 +1367,8 @@ a.account-card:hover {
   min-height: 5rem;
   padding: 1rem 1.5rem;
   border-radius: 18px;
-  background: linear-gradient(100deg, #046c4e 0%, #0f8f67 45%, #15a878 100%);
-  color: #fff;
+  background: #faf3e9;
+  color: #01614c;
   text-decoration: none;
   font-size: clamp(1.4rem, 2vw, 2rem);
   font-weight: 700;
@@ -1389,11 +1389,9 @@ a.account-card:hover {
   margin-left: -2rem;
   margin-right: -2rem;
   margin-bottom: -2rem;
-  border: 1px solid var(--border);
+  border: none;
   border-radius: 0;
-  border-left: 0;
-  border-right: 0;
-  background: linear-gradient(145deg, rgba(255, 252, 247, 0.82) 0%, rgba(247, 237, 224, 0.84) 100%);
+  background: #01614c;
   box-shadow: none;
   padding: 0.2rem 2rem 0.35rem;
   position: relative;
@@ -1413,9 +1411,9 @@ a.account-card:hover {
   min-width: 1.8rem;
   height: 1.8rem;
   border-radius: 999px;
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.75);
-  color: var(--accent-strong);
+  border: 1px solid rgba(250, 243, 233, 0.45);
+  background: #faf3e9;
+  color: #01614c;
   text-decoration: none;
   font-size: 0.72rem;
   font-weight: 700;
@@ -1426,8 +1424,8 @@ a.account-card:hover {
 }
 
 .footer-social a:hover {
-  border-color: rgba(4, 108, 78, 0.45);
-  background: rgba(4, 108, 78, 0.12);
+  border-color: #faf3e9;
+  background: rgba(250, 243, 233, 0.25);
 }
 
 .footer-bottom-row {
@@ -1447,7 +1445,7 @@ a.account-card:hover {
 
 .footer-meta {
   margin: 0;
-  color: var(--muted);
+  color: #faf3e9;
   font-size: 0.8rem;
 }
 
