@@ -60,6 +60,14 @@ export async function updateAccount(payload) {
   return response.data;
 }
 
+export async function adminUpdateInterestRate(accountId, interestRate) {
+  const response = await accountApiClient.put(`/accounts/${accountId}`, {
+    interestRate,
+    empty: true
+  });
+  return response.data;
+}
+
 export async function deleteAccount(accountId) {
   const response = await accountApiClient.delete(`/accounts/${accountId}`);
   return response.data;

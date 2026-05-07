@@ -20,10 +20,16 @@ function attachSessionExpiredInterceptor(client) {
       const requestUrl = error?.config?.url || '';
       const authState = readStoredAuthState();
       const hadSession = Boolean(authState.accessToken);
+      // Check that the token used for this specific request is still the current one.
+      // If it differs, this is a stale in-flight request from a previous session
+      // (e.g., user logged out and a new user logged in before the old request completed).
+      // Clearing the new user's session in that case would be wrong.
+      const sentToken = (error?.config?.headers?.Authorization || '').replace(/^Bearer\s+/, '');
+      const tokenStillCurrent = sentToken === authState.accessToken;
       // Only clear the session on 401 (Unauthorized = token missing/expired/invalid).
       // 403 (Forbidden) means the user IS authenticated but lacks permission — do not log them out.
       // Ignore auth endpoint failures during login/register so user sees the real error.
-      if (status === 401 && hadSession && !isAuthEndpoint(requestUrl)) {
+      if (status === 401 && hadSession && tokenStillCurrent && !isAuthEndpoint(requestUrl)) {
         window.localStorage.removeItem(AUTH_STORAGE_KEY);
         window.localStorage.removeItem(CUSTOMER_CONTEXT_KEY);
         // Only redirect if not already on the login page to avoid redirect loops

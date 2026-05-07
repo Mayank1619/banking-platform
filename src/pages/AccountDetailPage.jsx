@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { closeRrspAccount, deleteAccount, getGics, openGic, redeemGic } from '../api/accounts';
+import { adminUpdateInterestRate, closeRrspAccount, deleteAccount, getGics, openGic, redeemGic } from '../api/accounts';
 import { mapAxiosError } from '../api/axiosClient';
+import { useAuth } from '../auth/AuthContext';
 import { useGetAccount } from '../hooks/useGetAccount';
 
 const GIC_TERM_LABELS = {
@@ -29,12 +30,23 @@ function gicTermOptionLabel(term) {
 
 const GIC_TERMS = ['SIX_MONTHS', 'ONE_YEAR', 'TWO_YEARS', 'THREE_YEARS', 'FIVE_YEARS'];
 
+function mapDeletedAccountError(error) {
+  const mapped = mapAxiosError(error);
+  if (mapped.code === 'ACCOUNT_NOT_FOUND' || mapped.message === 'Account not found') {
+    return { ...mapped, message: 'This account may have been deleted or is no longer accessible.' };
+  }
+  return mapped;
+}
+
 export function AccountDetailPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { accountId } = useParams();
   const queryClient = useQueryClient();
+  const { isAdmin } = useAuth();
   const [error, setError] = useState(null);
+  const [actionMessage, setActionMessage] = useState(null);
+  const [interestRateInput, setInterestRateInput] = useState('');
   const [gicMessage, setGicMessage] = useState(null);
   const [gicError, setGicError] = useState(null);
   const [isGicModalOpen, setIsGicModalOpen] = useState(false);
@@ -44,6 +56,7 @@ export function AccountDetailPage() {
   const closeRrspMutation = useMutation({ mutationFn: closeRrspAccount });
   const openGicMutation = useMutation({ mutationFn: ({ id, payload }) => openGic(id, payload) });
   const redeemGicMutation = useMutation({ mutationFn: ({ id, gicId }) => redeemGic(id, gicId) });
+  const adminUpdateMutation = useMutation({ mutationFn: ({ id, rate }) => adminUpdateInterestRate(id, rate) });
 
   const account = query.data;
   const isRrsp = account?.accountType === 'RRSP';
@@ -111,6 +124,37 @@ export function AccountDetailPage() {
     }
   }
 
+  async function handleAdminUpdateInterestRate(event) {
+    event.preventDefault();
+    setError(null);
+    setActionMessage('Updating...');
+    try {
+      await adminUpdateMutation.mutateAsync({ id: accountId, rate: parseFloat(interestRateInput) });
+      queryClient.invalidateQueries({ queryKey: ['account', accountId] });
+      setActionMessage(`Interest rate updated to ${interestRateInput}%.`);
+      setInterestRateInput('');
+    } catch (mutationError) {
+      setActionMessage(null);
+      setError(mapAxiosError(mutationError));
+    }
+  }
+
+  async function handleAdminDelete() {
+    if (!account) return;
+    setError(null);
+    if (!window.confirm('Are you sure you want to permanently delete this account? This action cannot be undone.')) return;
+    setActionMessage('Deleting...');
+    try {
+      await deleteAccountMutation.mutateAsync(account.accountId);
+      navigate('/admin/accounts', {
+        state: { deletedAccountMessage: `Account ${account.accountId} has been successfully removed.` }
+      });
+    } catch (mutationError) {
+      setActionMessage(null);
+      setError(mapAxiosError(mutationError));
+    }
+  }
+
   const canDeleteAccount = Number(account?.balance) === 0;
   const queryError = query.error ? mapDeletedAccountError(query.error) : null;
   const gics = Array.isArray(gicQuery.data) ? gicQuery.data
@@ -147,6 +191,29 @@ export function AccountDetailPage() {
               <p className="muted" style={{ margin: '0 0 0.4rem 0', fontSize: '1rem', textAlign: 'center' }}>Balance</p>
               <p style={{ margin: 0, fontSize: '2.5rem', fontWeight: 700, lineHeight: 1, textAlign: 'center' }}>{account.balance}</p>
             </div>
+          </div>
+          <div>
+            <h4 style={{ margin: '0 0 0.75rem' }}>Update Interest Rate</h4>
+            <form
+              onSubmit={handleAdminUpdateInterestRate}
+              style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end' }}
+            >
+              <div className="field" style={{ margin: 0, flex: 1, maxWidth: 240 }}>
+                <label htmlFor="admin-interest-rate">Interest Rate (%)</label>
+                <input
+                  id="admin-interest-rate"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={interestRateInput}
+                  onChange={(e) => setInterestRateInput(e.target.value)}
+                  placeholder="e.g. 2.50"
+                />
+              </div>
+              <button type="submit" disabled={adminUpdateMutation.isPending || !interestRateInput}>
+                {adminUpdateMutation.isPending ? 'Updating...' : 'Update Rate'}
+              </button>
+            </form>
           </div>
           <div className="section-divider" />
           <div className="actions">
@@ -223,7 +290,6 @@ export function AccountDetailPage() {
 
         </section>
       ) : null}
-
       {isGicModalOpen ? (
         <div className="modal-backdrop" onClick={() => setIsGicModalOpen(false)}>
           <div className="modal-panel stack" role="dialog" aria-modal="true" aria-labelledby="gic-modal-title" onClick={(e) => e.stopPropagation()}>

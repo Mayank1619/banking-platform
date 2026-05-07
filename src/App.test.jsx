@@ -202,12 +202,11 @@ describe('Navbar and Sub-Navbar (AppLayout)', () => {
       expect(mockNavigate).toHaveBeenCalledWith('/');
     });
 
-    it('navigates to / (HomePage) for an admin', () => {
+    it('does not show the Overview button for an admin', () => {
       authContext.isAdmin = true;
       authContext.authState = { ...authContext.authState, customerId: null, roles: ['ADMIN'] };
       renderApp();
-      fireEvent.click(screen.getByRole('button', { name: 'Overview' }));
-      expect(mockNavigate).toHaveBeenCalledWith('/');
+      expect(screen.queryByRole('button', { name: 'Overview' })).not.toBeInTheDocument();
     });
 
     it('navigates to / when neither admin nor customerId', () => {

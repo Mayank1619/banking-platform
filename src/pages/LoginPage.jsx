@@ -9,7 +9,7 @@ import { emptyLoginForm, isEmailLike } from '../types';
 function getPostLoginRoute(authState) {
   const isAdmin = authState.roles.includes('ADMIN') || authState.roles.includes('ROLE_ADMIN');
   if (isAdmin) {
-    return '/customer';
+    return '/admin/customers';
   }
   // If customerId is present, redirect to their accounts page
   if (authState.customerId) {

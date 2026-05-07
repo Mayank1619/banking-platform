@@ -11,6 +11,7 @@ import { CustomerDetailPage } from './pages/CustomerDetailPage';
 import { CustomerEditPage } from './pages/CustomerEditPage';
 import { CustomerProfilePage } from './pages/CustomerProfilePage';
 import AdminCustomersPage from './pages/AdminCustomersPage';
+import { AccountAdminListPage } from './pages/AccountAdminListPage';
 
 import { DepositPage } from './pages/DepositPage';
 import { MonthlyStatementPage } from './pages/MonthlyStatementPage';
@@ -32,7 +33,7 @@ function getDefaultAuthenticatedRoute(authState) {
   const isAdmin = authState.roles.includes('ADMIN') || authState.roles.includes('ROLE_ADMIN');
 
   if (isAdmin) {
-    return '/customer';
+    return '/admin/customers';
   }
 
   if (authState.customerId) {
@@ -63,6 +64,9 @@ function ProfileDropdown({ onClose }) {
 
   function handleLogout() {
     onClose();
+    // Navigate to /login BEFORE clearing auth state so ProtectedRoute never
+    // saves the current page as state.from (which would redirect the next user there).
+    navigate('/login', { replace: true });
     logout();
   }
 
@@ -218,18 +222,11 @@ function AppLayout() {
           <nav className="subnav-list">
             {isAdminUser ? (
               <>
-                <button
-                  type="button"
-                  className={`subnav-btn${isOverviewActive ? ' active' : ''}`}
-                  onClick={handleOverview}
-                >
-                  Overview
-                </button>
                 <NavLink
                   className={() => `subnav-btn${isCustomerAccountsActiveAdmin ? ' active' : ''}`}
                   to="/admin/accounts"
                 >
-                  Customer Accounts
+                  All Accounts
                 </NavLink>
                 <NavLink
                   className={() => `subnav-btn${isCustomersActive ? ' active' : ''}`}
@@ -237,34 +234,6 @@ function AppLayout() {
                 >
                   Customers
                 </NavLink>
-                <button
-                  type="button"
-                  className={`subnav-btn${isFeatureActive('transactions') ? ' active' : ''}`}
-                  onClick={() => handleFeatureNav('transactions')}
-                >
-                  Transactions
-                </button>
-                <button
-                  type="button"
-                  className={`subnav-btn${isFeatureActive('statements') ? ' active' : ''}`}
-                  onClick={() => handleFeatureNav('statements')}
-                >
-                  Monthly Statement
-                </button>
-                <button
-                  type="button"
-                  className={`subnav-btn${isFeatureActive('insights') ? ' active' : ''}`}
-                  onClick={() => handleFeatureNav('insights')}
-                >
-                  Spending Insights
-                </button>
-                <button
-                  type="button"
-                  className={`subnav-btn${isFeatureActive('standing-orders') ? ' active' : ''}`}
-                  onClick={() => handleFeatureNav('standing-orders')}
-                >
-                  Standing Orders
-                </button>
               </>
             ) : (
               <>
@@ -397,11 +366,11 @@ export default function App() {
         <Route path="/password-reset" element={<PublicOnlyRoute><PasswordResetPage /></PublicOnlyRoute>} />
 
         <Route element={<ProtectedRoute />}> 
-                    {/* Admin-only Customers page */}
+                    {/* Admin-only pages */}
                     <Route path="/admin/customers" element={<AdminCustomersPage />} />
+                    <Route path="/admin/accounts" element={<AccountAdminListPage />} />
           <Route path="/customer/create" element={<CustomerCreatePage />} />
-          <Route path="/customer" element={<CustomerDetailPage />} />
-          {/* <Route path="/customer/:customerId" element={<CustomerDetailPage />} /> */}
+          <Route path="/customer/:customerId" element={<CustomerDetailPage />} />
           <Route path="/customer/:customerId/edit" element={<CustomerEditPage />} />
           <Route path="/customer-profile" element={<CustomerProfilePage />} />
           <Route path="/customer/:customerId/accounts" element={<AccountListPage />} />
