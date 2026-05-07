@@ -56,7 +56,7 @@ public class PdfStatementService {
             String fullName = (customerName != null && !customerName.isBlank()) ? customerName : "N/A";
 
             // ---- Bank header ----
-            doc.add(new Paragraph("FDM Digital Bank")
+            doc.add(new Paragraph("VOLTIO Digital Bank")
                     .setFontSize(22).setBold().setTextAlignment(TextAlignment.CENTER));
             doc.add(new Paragraph("Account Statement")
                     .setFontSize(14).setTextAlignment(TextAlignment.CENTER)
@@ -64,7 +64,7 @@ public class PdfStatementService {
             doc.add(new Paragraph(" "));
 
             // ---- Customer details section ----
-            doc.add(new Paragraph("Customer Details").setFontSize(13).setBold());
+            doc.add(new Paragraph("Customer Details").setFontSize(14).setBold());
             doc.add(buildDetailLine("Customer Name:", fullName));
             doc.add(buildDetailLine("Account Number:", accountNumber != null ? accountNumber : "N/A"));
             doc.add(buildDetailLine("Account Status:", accountStatus));
@@ -182,7 +182,7 @@ public class PdfStatementService {
         return new Paragraph()
                 .add(new com.itextpdf.layout.element.Text(label + " ").setBold())
                 .add(new com.itextpdf.layout.element.Text(value))
-                .setFontSize(11);
+                .setFontSize(10);
     }
 
     private Cell summaryLabelCell(String text) {
