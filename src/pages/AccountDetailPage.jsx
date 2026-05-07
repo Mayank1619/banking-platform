@@ -192,29 +192,6 @@ export function AccountDetailPage() {
               <p style={{ margin: 0, fontSize: '2.5rem', fontWeight: 700, lineHeight: 1, textAlign: 'center' }}>{account.balance}</p>
             </div>
           </div>
-          <div>
-            <h4 style={{ margin: '0 0 0.75rem' }}>Update Interest Rate</h4>
-            <form
-              onSubmit={handleAdminUpdateInterestRate}
-              style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end' }}
-            >
-              <div className="field" style={{ margin: 0, flex: 1, maxWidth: 240 }}>
-                <label htmlFor="admin-interest-rate">Interest Rate (%)</label>
-                <input
-                  id="admin-interest-rate"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={interestRateInput}
-                  onChange={(e) => setInterestRateInput(e.target.value)}
-                  placeholder="e.g. 2.50"
-                />
-              </div>
-              <button type="submit" disabled={adminUpdateMutation.isPending || !interestRateInput}>
-                {adminUpdateMutation.isPending ? 'Updating...' : 'Update Rate'}
-              </button>
-            </form>
-          </div>
           <div className="section-divider" />
           <div className="actions">
             <Link className="button-link subtle" to={`/accounts/transfer?fromAccountId=${account.accountId}`}>Transfer Funds</Link>
@@ -290,6 +267,54 @@ export function AccountDetailPage() {
 
         </section>
       ) : null}
+
+      {isAdmin && account ? (
+        <section className="panel stack danger-zone">
+          <div className="section-header">
+            <div>
+              <h3 style={{ margin: 0 }}>Admin Management</h3>
+              <p className="muted" style={{ margin: '0.25rem 0 0 0' }}>Administrative actions for this account.</p>
+            </div>
+          </div>
+          {actionMessage ? <div className="banner success">{actionMessage}</div> : null}
+          <div>
+            <h4>Update Interest Rate</h4>
+            <form className="stack" onSubmit={handleAdminUpdateInterestRate}>
+              <div className="field">
+                <label htmlFor="interest-rate-input">Interest Rate (%)</label>
+                <input
+                  id="interest-rate-input"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={interestRateInput}
+                  onChange={(e) => setInterestRateInput(e.target.value)}
+                  placeholder="e.g. 2.50"
+                />
+              </div>
+              <div className="actions">
+                <button type="submit" disabled={adminUpdateMutation.isPending || !interestRateInput}>Update Rate</button>
+              </div>
+            </form>
+          </div>
+          <div className="section-divider" />
+          <div>
+            <h4>Delete Account</h4>
+            <p className="muted compact-text">Permanently remove this account. This action cannot be undone.</p>
+            <div className="actions">
+              <button
+                type="button"
+                className="secondary danger"
+                onClick={handleAdminDelete}
+                disabled={deleteAccountMutation.isPending}
+              >
+                Delete Account
+              </button>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
       {isGicModalOpen ? (
         <div className="modal-backdrop" onClick={() => setIsGicModalOpen(false)}>
           <div className="modal-panel stack" role="dialog" aria-modal="true" aria-labelledby="gic-modal-title" onClick={(e) => e.stopPropagation()}>
