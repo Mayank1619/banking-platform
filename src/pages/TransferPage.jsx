@@ -3,40 +3,10 @@ import { useMutation } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import { transferBetweenAccounts } from '../api/accounts';
 import { mapAxiosError } from '../api/axiosClient';
+import { useAuth } from '../auth/AuthContext';
+import { useListCustomerAccounts } from '../hooks/useListCustomerAccounts';
 import { useRecategoriseTransaction } from '../hooks/useGroup3';
 import { TRANSACTION_CATEGORIES } from '../types';
-
-const emptyTransferForm = {
-  fromAccountId: '',
-  toAccountId: '',
-  amount: '25.00',
-  description: '',
-  category: ''
-};
-
-function validateTransferForm(form) {
-  const fromAccountId = Number.parseInt(String(form.fromAccountId).trim(), 10);
-  const toAccountId = Number.parseInt(String(form.toAccountId).trim(), 10);
-  const amount = Number.parseFloat(String(form.amount).trim());
-
-  if (!Number.isInteger(fromAccountId) || fromAccountId <= 0) {
-    return 'From Account ID must be a positive whole number.';
-  }
-
-  if (!Number.isInteger(toAccountId) || toAccountId <= 0) {
-    return 'To Account ID must be a positive whole number.';
-  }
-
-  if (fromAccountId === toAccountId) {
-    return 'Source and destination accounts must be different.';
-  }
-
-  if (!Number.isFinite(amount) || amount <= 0) {
-    return 'Amount must be greater than zero.';
-  }
-
-  return null;
-}
 
 function mapTransferError(error) {
   const mapped = mapAxiosError(error);
@@ -59,29 +29,74 @@ function mapTransferError(error) {
   return mapped;
 }
 
+function accountOptionLabel(account) {
+  return `${account.accountType} - ${account.accountId} (Balance: $${account.balance})`;
+}
+
 export function TransferPage() {
   const [searchParams] = useSearchParams();
   const prefilledFromAccountId = searchParams.get('fromAccountId') || '';
-  const [form, setForm] = useState({ ...emptyTransferForm, fromAccountId: prefilledFromAccountId });
+  const { authState } = useAuth();
+  const customerId = authState?.customerId;
+
+  const accountsQuery = useListCustomerAccounts(customerId);
+  const accounts = accountsQuery.data ?? [];
+
+  const [form, setForm] = useState({
+    fromAccountId: prefilledFromAccountId,
+    toAccountId: '',
+    amount: '25.00',
+    description: '',
+    category: ''
+  });
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const transferMutation = useMutation({ mutationFn: transferBetweenAccounts });
   const recategoriseTransaction = useRecategoriseTransaction();
 
+  const fromAccount = accounts.find((a) => String(a.accountId) === String(form.fromAccountId));
+  const fromBalance = fromAccount ? Number(fromAccount.balance) : null;
+  const sameAccountError =
+    form.fromAccountId && form.toAccountId && form.fromAccountId === form.toAccountId
+      ? 'Source and destination accounts must be different.'
+      : null;
+  const amountExceedsBalance =
+    fromBalance !== null && Number(form.amount) > fromBalance
+      ? `Amount cannot exceed the source account balance of $${fromBalance}.`
+      : null;
+
   async function handleSubmit(event) {
     event.preventDefault();
     setError(null);
 
-    const validationMessage = validateTransferForm(form);
-    if (validationMessage) {
-      setError({ message: validationMessage });
+    if (sameAccountError) {
+      setError({ message: sameAccountError });
+      return;
+    }
+
+    if (amountExceedsBalance) {
+      setError({ message: amountExceedsBalance });
+      return;
+    }
+
+    const fromAccountId = Number.parseInt(String(form.fromAccountId).trim(), 10);
+    const toAccountId = Number.parseInt(String(form.toAccountId).trim(), 10);
+    const amount = Number.parseFloat(String(form.amount).trim());
+
+    if (!fromAccountId || !toAccountId) {
+      setError({ message: 'Please select both source and destination accounts.' });
+      return;
+    }
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setError({ message: 'Amount must be greater than zero.' });
       return;
     }
 
     const payload = {
       ...form,
-      fromAccountId: Number.parseInt(String(form.fromAccountId).trim(), 10),
-      toAccountId: Number.parseInt(String(form.toAccountId).trim(), 10),
+      fromAccountId,
+      toAccountId,
       amount: String(form.amount).trim()
     };
 
@@ -118,6 +133,8 @@ export function TransferPage() {
     }
   }
 
+  const isLoading = accountsQuery.isLoading;
+
   return (
     <div className="stack">
       {error ? <div className="banner error">{error.message}</div> : null}
@@ -129,31 +146,58 @@ export function TransferPage() {
         </div>
         <form id="transfer-form" className="form-grid" onSubmit={handleSubmit}>
           <div className="field">
-            <label htmlFor="transfer-from-account-id">From Account ID</label>
-            <input
+            <label htmlFor="transfer-from-account-id">From Account</label>
+            <select
               id="transfer-from-account-id"
               value={form.fromAccountId}
               onChange={(event) => setForm((current) => ({ ...current, fromAccountId: event.target.value }))}
+              disabled={isLoading}
               required
-            />
+            >
+              <option value="">{isLoading ? 'Loading accounts…' : 'Select source account'}</option>
+              {accounts.map((account) => (
+                <option key={account.accountId} value={String(account.accountId)}>
+                  {accountOptionLabel(account)}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="field">
-            <label htmlFor="transfer-to-account-id">To Account ID</label>
-            <input
+            <label htmlFor="transfer-to-account-id">To Account</label>
+            <select
               id="transfer-to-account-id"
               value={form.toAccountId}
               onChange={(event) => setForm((current) => ({ ...current, toAccountId: event.target.value }))}
+              disabled={isLoading}
               required
-            />
+            >
+              <option value="">{isLoading ? 'Loading accounts…' : 'Select destination account'}</option>
+              {accounts.map((account) => (
+                <option
+                  key={account.accountId}
+                  value={String(account.accountId)}
+                  disabled={String(account.accountId) === String(form.fromAccountId)}
+                >
+                  {accountOptionLabel(account)}
+                </option>
+              ))}
+            </select>
+            {sameAccountError ? <p className="field-hint" style={{ color: 'var(--danger)' }}>{sameAccountError}</p> : null}
           </div>
           <div className="field">
             <label htmlFor="transfer-amount">Amount</label>
             <input
               id="transfer-amount"
+              type="number"
+              min="0.01"
+              step="0.01"
+              max={fromBalance !== null ? fromBalance : undefined}
               value={form.amount}
               onChange={(event) => setForm((current) => ({ ...current, amount: event.target.value }))}
               required
             />
+            {amountExceedsBalance ? <p className="field-hint" style={{ color: 'var(--danger)' }}>{amountExceedsBalance}</p> : null}
+            {fromBalance !== null ? <p className="field-hint">Available balance: ${fromBalance}</p> : null}
           </div>
           <div className="field full">
             <label htmlFor="transfer-description">Description</label>
@@ -176,8 +220,14 @@ export function TransferPage() {
             <p className="field-hint">Optional. Category for this transaction.</p>
           </div>
         </form>
-        <div className="actions">
-          <button type="submit" form="transfer-form" disabled={transferMutation.isPending}>Submit Transfer</button>
+        <div className="actions" style={{ justifyContent: 'center' }}>
+          <button
+            type="submit"
+            form="transfer-form"
+            disabled={transferMutation.isPending || isLoading || Boolean(sameAccountError) || Boolean(amountExceedsBalance)}
+          >
+            Submit Transfer
+          </button>
           <Link className="button-link subtle" to={form.fromAccountId ? `/accounts/${form.fromAccountId}` : '/'}>Back</Link>
         </div>
       </section>

@@ -34,7 +34,18 @@ vi.mock('@tanstack/react-query', () => ({
   useMutation: () => ({
     isPending: false,
     mutateAsync: transferMutateAsync
+  }),
+  useQuery: () => ({
+    data: [
+      { accountId: 10, accountType: 'CHEQUING', balance: '500.00' },
+      { accountId: 12, accountType: 'SAVINGS', balance: '250.00' }
+    ],
+    isLoading: false
   })
+}));
+
+vi.mock('../auth/AuthContext', () => ({
+  useAuth: () => ({ authState: { customerId: 1 } })
 }));
 
 function renderDepositPage() {
@@ -121,8 +132,8 @@ describe('money movement pages', () => {
   it('blocks transfers between the same account', async () => {
     renderTransferPage();
 
-    fireEvent.change(screen.getByLabelText('From Account ID'), { target: { value: '10' } });
-    fireEvent.change(screen.getByLabelText('To Account ID'), { target: { value: '10' } });
+    fireEvent.change(screen.getByLabelText('From Account'), { target: { value: '10' } });
+    fireEvent.change(screen.getByLabelText('To Account'), { target: { value: '10' } });
     fireEvent.change(screen.getByLabelText('Amount'), { target: { value: '15.00' } });
     fireEvent.click(screen.getByRole('button', { name: 'Submit Transfer' }));
 
@@ -141,7 +152,7 @@ describe('money movement pages', () => {
 
     renderTransferPage('/accounts/transfer?fromAccountId=10');
 
-    fireEvent.change(screen.getByLabelText('To Account ID'), { target: { value: '12' } });
+    fireEvent.change(screen.getByLabelText('To Account'), { target: { value: '12' } });
     fireEvent.change(screen.getByLabelText('Amount'), { target: { value: '15.00' } });
     fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Move funds' } });
     fireEvent.click(screen.getByRole('button', { name: 'Submit Transfer' }));
