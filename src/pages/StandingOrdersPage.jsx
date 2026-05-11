@@ -12,7 +12,7 @@ import {
 import { STANDING_ORDER_FREQUENCIES, TRANSACTION_CATEGORIES, emptyStandingOrderForm } from '../types';
 
 function validateStandingOrderForm(form) {
-  if (!form.payeeAccount) {
+  if (!form.payeeAccount?.trim()) {
     return 'Payee account is required.';
   }
 
@@ -119,24 +119,12 @@ export function StandingOrdersPage() {
         <form id="standing-order-form" className="form-grid" onSubmit={handleSubmit}>
           <div className="field">
             <label htmlFor="standing-order-payee-account">Payee Account</label>
-            <select
+            <input
               id="standing-order-payee-account"
               value={form.payeeAccount}
               onChange={(event) => setForm((current) => ({ ...current, payeeAccount: event.target.value }))}
-              disabled={accountsQuery.isLoading}
               required
-            >
-              <option value="">{accountsQuery.isLoading ? 'Loading accounts…' : 'Select payee account'}</option>
-              {(accountsQuery.data ?? []).map((account) => (
-                <option
-                  key={account.accountId}
-                  value={String(account.accountId)}
-                  disabled={String(account.accountId) === String(accountId)}
-                >
-                  {account.accountType} - {account.accountId} (Balance: ${account.balance})
-                </option>
-              ))}
-            </select>
+            />
           </div>
           <div className="field">
             <label htmlFor="standing-order-payee-name">Payee Name</label>
