@@ -194,7 +194,8 @@ export function AccountDetailPage() {
           </div>
           <div className="section-divider" />
           <div className="actions">
-            <Link className="button-link subtle" to={`/accounts/transfer?fromAccountId=${account.accountId}`}>Transfer Funds</Link>
+            {isAdmin ? <Link className="button-link subtle" to={`/accounts/${account.accountId}/deposit`}>Deposit Funds</Link> : null}
+            {isAdmin ? <Link className="button-link subtle" to={`/accounts/transfer?fromAccountId=${account.accountId}`}>Transfer Funds</Link> : null}
             <Link className="button-link subtle" to={`/accounts/${account.accountId}/transactions`}>Transaction History</Link>
             <Link className="button-link subtle" to={`/accounts/${account.accountId}/standing-orders`}>Standing Orders</Link>
             <Link className="button-link subtle" to={`/accounts/${account.accountId}/statements`}>Monthly Statement</Link>

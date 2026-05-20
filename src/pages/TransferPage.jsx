@@ -36,7 +36,7 @@ function accountOptionLabel(account) {
 export function TransferPage() {
   const [searchParams] = useSearchParams();
   const prefilledFromAccountId = searchParams.get('fromAccountId') || '';
-  const { authState } = useAuth();
+  const { authState, isAdmin } = useAuth();
   const customerId = authState?.customerId;
 
   const accountsQuery = useListCustomerAccounts(customerId);
@@ -64,6 +64,19 @@ export function TransferPage() {
     fromBalance !== null && Number(form.amount) > fromBalance
       ? `Amount cannot exceed the source account balance of $${fromBalance}.`
       : null;
+
+  if (!isAdmin) {
+    return (
+      <div className="stack">
+        <section className="panel stack">
+          <div className="banner error">Access denied. Only administrators can transfer funds between accounts.</div>
+          <div className="actions">
+            <Link className="button-link subtle" to="/">Back to Home</Link>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   async function handleSubmit(event) {
     event.preventDefault();

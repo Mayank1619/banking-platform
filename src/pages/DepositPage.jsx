@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { mapAxiosError } from '../api/axiosClient';
 import { useDeposit } from '../hooks/useDeposit';
 import { emptyMoneyMovementForm } from '../types';
+import { useAuth } from '../auth/AuthContext';
 
 function mapMoneyMovementError(error) {
   const mapped = mapAxiosError(error);
@@ -24,6 +25,20 @@ export function DepositPage() {
   const [form, setForm] = useState({ ...emptyMoneyMovementForm, accountId: accountId || '' });
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const { isAdmin } = useAuth();
+
+  if (!isAdmin) {
+    return (
+      <div className="stack">
+        <section className="panel stack">
+          <div className="banner error">Access denied. Only administrators can deposit funds into accounts.</div>
+          <div className="actions">
+            <Link className="button-link subtle" to={`/accounts/${accountId}`}>Back to Account</Link>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   async function handleSubmit(event) {
     event.preventDefault();

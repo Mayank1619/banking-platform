@@ -4,6 +4,7 @@ import { mapAxiosError } from '../api/axiosClient';
 import { useWithdraw } from '../hooks/useWithdraw';
 import { useRecategoriseTransaction } from '../hooks/useGroup3';
 import { TRANSACTION_CATEGORIES, emptyMoneyMovementForm } from '../types';
+import { useAuth } from '../auth/AuthContext';
 
 function mapMoneyMovementError(error) {
   const mapped = mapAxiosError(error);
@@ -26,6 +27,20 @@ export function WithdrawPage() {
   const [form, setForm] = useState({ ...emptyMoneyMovementForm, accountId: accountId || '' });
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const { isAdmin } = useAuth();
+
+  if (!isAdmin) {
+    return (
+      <div className="stack">
+        <section className="panel stack">
+          <div className="banner error">Access denied. Only administrators can withdraw funds from accounts.</div>
+          <div className="actions">
+            <Link className="button-link subtle" to={`/accounts/${accountId}`}>Back to Account</Link>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   async function handleSubmit(event) {
     event.preventDefault();
