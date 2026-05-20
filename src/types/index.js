@@ -55,9 +55,15 @@ function getFutureDateTime(daysAhead) {
 }
 
 function getPreviousMonthValue() {
-  const date = new Date();
-  date.setUTCMonth(date.getUTCMonth() - 1);
-  return toMonthInputValue(date);
+  const now = new Date();
+  const year = now.getFullYear();
+  const monthIndex = now.getMonth();
+
+  if (monthIndex === 0) {
+    return `${year - 1}-12`;
+  }
+
+  return `${year}-${String(monthIndex).padStart(2, '0')}`;
 }
 
 function getCurrentMonthValue() {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { mapAxiosError } from '../api/axiosClient';
 import { AccountSwitcher } from '../components/AccountSwitcher';
@@ -84,32 +84,22 @@ export function MonthlyStatementPage() {
   const initialPeriod = requestedPeriod || emptyMonthlyStatementLookup.period;
   const initial = splitPeriod(initialPeriod);
   const [form, setForm] = useState({ year: initial.year, month: initial.month });
-  const [submittedPeriod, setSubmittedPeriod] = useState('');
-  const query = useMonthlyStatement({ accountId, period: submittedPeriod });
-
-  function handleSubmit(event) {
-    event.preventDefault();
-    const period = joinPeriod(form.year, form.month);
-    if (!period) {
-      return;
-    }
-
-    setSubmittedPeriod(period);
-  }
+  const selectedPeriod = useMemo(() => joinPeriod(form.year, form.month), [form.month, form.year]);
+  const query = useMonthlyStatement({ accountId, period: selectedPeriod });
 
   const statementPdf = query.data;
   const queryError = query.error ? mapAxiosError(query.error) : null;
-  const errorMessage = resolveStatementErrorMessage(queryError, submittedPeriod);
+  const errorMessage = resolveStatementErrorMessage(queryError, selectedPeriod);
 
   function handleDownloadStatement() {
-    if (!statementPdf || !submittedPeriod) {
+    if (!statementPdf || !selectedPeriod) {
       return;
     }
 
     const downloadUrl = window.URL.createObjectURL(statementPdf);
     const anchor = document.createElement('a');
     anchor.href = downloadUrl;
-    anchor.download = `statement-${accountId}-${submittedPeriod}.pdf`;
+    anchor.download = `statement-${accountId}-${selectedPeriod}.pdf`;
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
@@ -126,7 +116,7 @@ export function MonthlyStatementPage() {
           </div>
           <AccountSwitcher accountId={accountId} accounts={accountsQuery.data} feature="statements" />
         </div>
-        <form className="form-grid" onSubmit={handleSubmit}>
+        <form className="form-grid" onSubmit={(event) => event.preventDefault()}>
           <div className="field">
             <label htmlFor="statement-year">Statement Year</label>
             <input
@@ -156,20 +146,19 @@ export function MonthlyStatementPage() {
             </select>
           </div>
           <div className="actions">
-            <button type="submit" disabled={query.isFetching}>Load Statement</button>
             <Link className="button-link subtle" to={`/accounts/${accountId}`}>Back to Account</Link>
           </div>
         </form>
         {query.isLoading || query.isFetching ? <div className="banner success">Loading monthly statement...</div> : null}
         {errorMessage ? <div className="banner error">{errorMessage}</div> : null}
-        {!submittedPeriod ? <div className="banner info">Pick a statement month and click Load Statement to request data.</div> : null}
+        {!selectedPeriod ? <div className="banner info">Pick a statement month to request data.</div> : null}
       </section>
 
       <section className="panel stack">
         <div className="section-header">
           <div>
             <h3>Statement File</h3>
-            <p className="muted">Requested period: {submittedPeriod || 'None selected'}</p>
+            <p className="muted">Requested period: {selectedPeriod || 'None selected'}</p>
           </div>
         </div>
         {statementPdf ? (
