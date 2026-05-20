@@ -1,41 +1,44 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { MonthlyStatementPage } from './MonthlyStatementPage';
+import { fireEvent, render, screen } from "@testing-library/react";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { MonthlyStatementPage } from "./MonthlyStatementPage";
 
 const useMonthlyStatementMock = vi.fn();
 
-vi.mock('../hooks/useGroup3', () => ({
-  useMonthlyStatement: (filters) => useMonthlyStatementMock(filters)
+vi.mock("../hooks/useGroup3", () => ({
+  useMonthlyStatement: (filters) => useMonthlyStatementMock(filters),
 }));
 
-vi.mock('../hooks/useListCustomerAccounts', () => ({
+vi.mock("../hooks/useListCustomerAccounts", () => ({
   useListCustomerAccounts: () => ({
     isLoading: false,
     error: null,
-    data: [{ accountId: 12, accountType: 'SAVINGS', balance: '500.00' }]
-  })
+    data: [{ accountId: 12, accountType: "SAVINGS", balance: "500.00" }],
+  }),
 }));
 
-vi.mock('../auth/AuthContext', () => ({
-  useAuth: () => ({ authState: { customerId: 1 } })
+vi.mock("../auth/AuthContext", () => ({
+  useAuth: () => ({ authState: { customerId: 1 } }),
 }));
 
-vi.mock('../components/AccountSwitcher', () => ({
-  AccountSwitcher: () => null
+vi.mock("../components/AccountSwitcher", () => ({
+  AccountSwitcher: () => null,
 }));
 
-function renderMonthlyStatementPage(path = '/accounts/12/statements') {
+function renderMonthlyStatementPage(path = "/accounts/12/statements") {
   return render(
     <MemoryRouter initialEntries={[path]}>
       <Routes>
-        <Route path="/accounts/:accountId/statements" element={<MonthlyStatementPage />} />
+        <Route
+          path="/accounts/:accountId/statements"
+          element={<MonthlyStatementPage />}
+        />
       </Routes>
-    </MemoryRouter>
+    </MemoryRouter>,
   );
 }
 
-describe('MonthlyStatementPage', () => {
+describe("MonthlyStatementPage", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     useMonthlyStatementMock.mockReset();
@@ -43,7 +46,7 @@ describe('MonthlyStatementPage', () => {
       data: null,
       error: null,
       isLoading: false,
-      isFetching: false
+      isFetching: false,
     });
   });
 
@@ -51,63 +54,69 @@ describe('MonthlyStatementPage', () => {
     vi.useRealTimers();
   });
 
-  it('defaults to previous month on first load for a normal month', () => {
-    vi.setSystemTime(new Date('2026-05-15T10:00:00.000Z'));
+  it("defaults to previous month on first load for a normal month", () => {
+    vi.setSystemTime(new Date("2026-05-15T10:00:00.000Z"));
 
     renderMonthlyStatementPage();
 
-    expect(screen.getByLabelText('Statement Year')).toHaveValue(2026);
-    expect(screen.getByLabelText('Statement Month')).toHaveValue('04');
-    expect(useMonthlyStatementMock).toHaveBeenCalledWith(expect.objectContaining({
-      accountId: '12',
-      period: '2026-04'
-    }));
+    expect(screen.getByLabelText("Statement Year")).toHaveValue(2026);
+    expect(screen.getByLabelText("Statement Month")).toHaveValue("04");
+    expect(useMonthlyStatementMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        accountId: "12",
+        period: "2026-04",
+      }),
+    );
   });
 
-  it('defaults to December of the previous year in January', () => {
-    vi.setSystemTime(new Date('2026-01-15T10:00:00.000Z'));
+  it("defaults to December of the previous year in January", () => {
+    vi.setSystemTime(new Date("2026-01-15T10:00:00.000Z"));
 
     renderMonthlyStatementPage();
 
-    expect(screen.getByLabelText('Statement Year')).toHaveValue(2025);
-    expect(screen.getByLabelText('Statement Month')).toHaveValue('12');
-    expect(useMonthlyStatementMock).toHaveBeenCalledWith(expect.objectContaining({
-      accountId: '12',
-      period: '2025-12'
-    }));
+    expect(screen.getByLabelText("Statement Year")).toHaveValue(2025);
+    expect(screen.getByLabelText("Statement Month")).toHaveValue("12");
+    expect(useMonthlyStatementMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        accountId: "12",
+        period: "2025-12",
+      }),
+    );
   });
 
-  it('auto-loads and allows download without clicking load button', () => {
-    vi.setSystemTime(new Date('2026-05-15T10:00:00.000Z'));
-    const statementBlob = new Blob(['pdf-content'], { type: 'application/pdf' });
+  it("auto-loads and allows download without clicking load button", () => {
+    vi.setSystemTime(new Date("2026-05-15T10:00:00.000Z"));
+    const statementBlob = new Blob(["pdf-content"], {
+      type: "application/pdf",
+    });
 
     useMonthlyStatementMock.mockReturnValue({
       data: statementBlob,
       error: null,
       isLoading: false,
-      isFetching: false
+      isFetching: false,
     });
 
-    const createObjectURL = vi.fn(() => 'blob:statement');
+    const createObjectURL = vi.fn(() => "blob:statement");
     const revokeObjectURL = vi.fn();
     const originalCreateObjectURL = window.URL.createObjectURL;
     const originalRevokeObjectURL = window.URL.revokeObjectURL;
     window.URL.createObjectURL = createObjectURL;
     window.URL.revokeObjectURL = revokeObjectURL;
 
-    const appendChildSpy = vi.spyOn(document.body, 'appendChild');
-    const removeChildSpy = vi.spyOn(document.body, 'removeChild');
+    const appendChildSpy = vi.spyOn(document.body, "appendChild");
+    const removeChildSpy = vi.spyOn(document.body, "removeChild");
 
     try {
       renderMonthlyStatementPage();
 
-      expect(screen.getByText('Download Statement PDF')).toBeInTheDocument();
-      expect(screen.queryByText('Load Statement')).not.toBeInTheDocument();
+      expect(screen.getByText("Download Statement PDF")).toBeInTheDocument();
+      expect(screen.queryByText("Load Statement")).not.toBeInTheDocument();
 
-      fireEvent.click(screen.getByText('Download Statement PDF'));
+      fireEvent.click(screen.getByText("Download Statement PDF"));
 
       expect(createObjectURL).toHaveBeenCalledWith(statementBlob);
-      expect(revokeObjectURL).toHaveBeenCalledWith('blob:statement');
+      expect(revokeObjectURL).toHaveBeenCalledWith("blob:statement");
       expect(appendChildSpy).toHaveBeenCalled();
       expect(removeChildSpy).toHaveBeenCalled();
     } finally {
