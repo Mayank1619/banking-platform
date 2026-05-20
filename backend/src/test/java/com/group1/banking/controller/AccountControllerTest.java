@@ -62,7 +62,42 @@ class AccountControllerTest {
     // ===== CREATE ACCOUNT =====
 
     @Test
-    void createAccount_shouldReturn201_forCheckingAccount() throws Exception {
+    void createAccount_shouldReturn201_withOnlyAccountType_forCustomer_checking() throws Exception {
+        String body = "{\"accountType\":\"CHECKING\"}";
+
+        when(accountService.createAccount(eq(42L), any(CreateAccountRequest.class)))
+                .thenReturn(sampleAccount());
+
+        mockMvc.perform(post("/customers/42/accounts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.accountId").value(1001))
+                .andExpect(jsonPath("$.accountType").value("CHECKING"));
+    }
+
+    @Test
+    void createAccount_shouldReturn201_withOnlyAccountType_forCustomer_savings() throws Exception {
+        String body = "{\"accountType\":\"SAVINGS\"}";
+
+        AccountResponse savingsResponse = new AccountResponse(
+                1002L, 42L, AccountType.SAVINGS, AccountStatus.ACTIVE,
+                new BigDecimal("0.00"), new BigDecimal("0.0500"), Instant.now(), Instant.now());
+
+        when(accountService.createAccount(eq(42L), any(CreateAccountRequest.class)))
+                .thenReturn(savingsResponse);
+
+        mockMvc.perform(post("/customers/42/accounts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.accountType").value("SAVINGS"))
+                .andExpect(jsonPath("$.balance").value(0.00))
+                .andExpect(jsonPath("$.interestRate").value(0.0500));
+    }
+
+    @Test
+    void createAccount_shouldReturn201_forCheckingAccount_adminPath() throws Exception {
         CreateAccountRequest request = new CreateAccountRequest(
                 AccountType.CHECKING, new BigDecimal("100.00"), null);
 
@@ -78,7 +113,7 @@ class AccountControllerTest {
     }
 
     @Test
-    void createAccount_shouldReturn201_forSavingsAccount() throws Exception {
+    void createAccount_shouldReturn201_forSavingsAccount_adminPath() throws Exception {
         CreateAccountRequest request = new CreateAccountRequest(
                 AccountType.SAVINGS, new BigDecimal("200.00"), new BigDecimal("0.05"));
 
@@ -186,6 +221,19 @@ class AccountControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void deposit_shouldReturn403_whenCustomerAttempts() throws Exception {
+        MonetaryRequest request = new MonetaryRequest(new BigDecimal("100.00"), "deposit");
+        OperationResult result = new OperationResult(HttpStatus.FORBIDDEN, Map.of("code", "DEPOSIT_FORBIDDEN", "message", "Only admins can deposit funds into accounts"));
+
+        when(monetaryOperationService.deposit(eq(1001L), any(), any())).thenReturn(result);
+
+        mockMvc.perform(post("/accounts/1001/deposit")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
     }
 
     // ===== WITHDRAW =====

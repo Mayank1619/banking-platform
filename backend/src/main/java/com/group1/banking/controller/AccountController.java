@@ -74,7 +74,7 @@ public class AccountController {
     public ResponseEntity<Object> deposit(
             @PathVariable Long accountId,
             @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
-            @RequestBody(required = false) MonetaryRequest request) {
+            @Valid @RequestBody(required = false) MonetaryRequest request) {
         OperationResult result = monetaryOperationService.deposit(accountId, request, idempotencyKey);
         return ResponseEntity.status(result.status()).body(result.body());
     }

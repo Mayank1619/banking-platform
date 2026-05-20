@@ -73,8 +73,27 @@ public class AccountService {
             throw new UnauthorisedException("UNAUTHORIZED", "You can only manage your own accounts.");
         }
 
-        // 4️⃣ Validate request
-        validateCreateRequest(request);
+        // 4️⃣ Determine effective balance and interest rate
+        BigDecimal effectiveBalance;
+        BigDecimal effectiveInterestRate;
+
+        if (isAdmin) {
+            // Admin path: use supplied values when present, otherwise fall back to system defaults
+            effectiveBalance = request.balance() != null
+                    ? scaleMoney(request.balance())
+                    : BigDecimal.ZERO.setScale(2, RoundingMode.UNNECESSARY);
+            effectiveInterestRate = request.interestRate() != null
+                    ? request.interestRate()
+                    : systemDefaultInterestRate(request.accountType());
+            validateAdminInterestRate(request);
+        } else {
+            // Customer path: ignore any caller-supplied values; apply system-controlled defaults
+            effectiveBalance = BigDecimal.ZERO.setScale(2, RoundingMode.UNNECESSARY);
+            effectiveInterestRate = systemDefaultInterestRate(request.accountType());
+            if (request.accountType() == AccountType.TFSA) {
+                validateTfsaEligibility(customer);
+            }
+        }
 
         // 5️⃣ Create account
         Account account = new Account();
@@ -84,8 +103,8 @@ public class AccountService {
         account.setCustomer(customer);
         account.setAccountType(request.accountType());
         account.setStatus(AccountStatus.ACTIVE);
-        account.setBalance(scaleMoney(request.balance()));
-        account.setInterestRate(request.interestRate());
+        account.setBalance(effectiveBalance);
+        account.setInterestRate(effectiveInterestRate);
 
         // 6️⃣ Save and return response
         return AccountResponse.from(accountRepository.save(account));
@@ -159,79 +178,44 @@ public class AccountService {
         accountRepository.save(account);
     }
 
-    private void validateCreateRequest(CreateAccountRequest request) {
-        if (request.accountType() == AccountType.SAVINGS) {
-            if (request.interestRate() == null) {
-                throw new UnprocessableException("MISSING_INTEREST_RATE", "interestRate is required for SAVINGS accounts", "interestRate");
-            }
-            if (request.interestRate().scale() > 4 || request.interestRate().compareTo(BigDecimal.ZERO) < 0) {
+    private BigDecimal systemDefaultInterestRate(AccountType accountType) {
+        return switch (accountType) {
+            case SAVINGS, TFSA -> new BigDecimal("0.0500");
+            case CHECKING -> null;
+        };
+    }
+
+    private void validateAdminInterestRate(CreateAccountRequest request) {
+        if (request.accountType() == AccountType.SAVINGS && request.interestRate() != null) {
+            if (request.interestRate().compareTo(BigDecimal.ZERO) < 0 || request.interestRate().scale() > 4) {
                 throw new UnprocessableException("INVALID_INTEREST_RATE", "interestRate must be non-negative with at most 4 decimal places", "interestRate");
             }
         }
-
-        if (request.accountType() == AccountType.CHECKING) {
-            if (request.interestRate() != null) {
-                throw new UnprocessableException("INVALID_INTEREST_RATE", "interestRate is not allowed for CHECKING accounts", "interestRate");
-            }
+        if (request.accountType() == AccountType.CHECKING && request.interestRate() != null) {
+            throw new UnprocessableException("INVALID_INTEREST_RATE", "interestRate is not allowed for CHECKING accounts", "interestRate");
         }
-
-        if (request.accountType() == AccountType.TFSA) {
-            // Validate interest rate for TFSA
-            if (request.interestRate() == null) {
-                throw new UnprocessableException("MISSING_INTEREST_RATE", "interestRate is required for TFSA accounts", "interestRate");
-            }
-            if (request.interestRate().scale() > 4 || request.interestRate().compareTo(BigDecimal.ZERO) < 0) {
+        if (request.accountType() == AccountType.TFSA && request.interestRate() != null) {
+            if (request.interestRate().compareTo(BigDecimal.ZERO) < 0 || request.interestRate().scale() > 4) {
                 throw new UnprocessableException("INVALID_INTEREST_RATE", "interestRate must be non-negative with at most 4 decimal places", "interestRate");
             }
-            // Validate customer eligibility (age, KYC, one TFSA per customer, contribution room)
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (!(authentication.getPrincipal() instanceof CustomUserPrincipal principal)) {
-                throw new UnauthorisedException("UNAUTHORIZED", "Authenticated user not found.");
-            }
-            UUID userId = principal.getUserId();
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new UnauthorisedException("UNAUTHORIZED", "Authenticated user not found."));
-            Long customerId = user.getCustomerId();
-            Customer customer = customerRepository.findByCustomerIdAndDeletedAtIsNull(customerId)
-                    .orElseThrow(() -> new NotFoundException("CUSTOMER_NOT_FOUND", "Customer not found", Map.of("customerId", customerId)));
+        }
+    }
 
-            // Age check (must be 18+)
-            // Assume Customer has a getDateOfBirth() method returning LocalDate
-            if (customer instanceof com.group1.banking.entity.Customer c) {
-                java.time.LocalDate dob = null;
-                try {
-                    java.lang.reflect.Method m = c.getClass().getMethod("getDateOfBirth");
-                    dob = (java.time.LocalDate) m.invoke(c);
-                } catch (Exception e) {
-                    throw new UnprocessableException("DOB_MISSING", "Date of birth is required for TFSA eligibility", "dateOfBirth");
-                }
-                java.time.LocalDate today = java.time.LocalDate.now();
-                if (dob == null || java.time.Period.between(dob, today).getYears() < 18) {
-                    throw new UnprocessableException("AGE_REQUIREMENT", "Customer must be at least 18 years old for TFSA", "dateOfBirth");
-                }
-            }
-
-            // KYC check (assume Customer has isKycVerified() method)
-            boolean kycVerified = false;
-            try {
-                java.lang.reflect.Method m = customer.getClass().getMethod("isKycVerified");
-                kycVerified = (Boolean) m.invoke(customer);
-            } catch (Exception e) {
-                throw new UnprocessableException("KYC_MISSING", "KYC verification is required for TFSA", "kyc");
-            }
-            if (!kycVerified) {
-                throw new UnprocessableException("KYC_REQUIRED", "Customer must be KYC verified for TFSA", "kyc");
-            }
-
-            // Only one TFSA per customer
-            boolean hasTfsa = customer.getAccounts().stream()
-                    .anyMatch(a -> a.getAccountType() == AccountType.TFSA && a.getDeletedAt() == null);
-            if (hasTfsa) {
-                throw new ConflictException("TFSA_EXISTS", "Customer already has an active TFSA account", null);
-            }
-
-            // Contribution room check (placeholder, implement logic as needed)
-            // throw new UnprocessableException("CONTRIBUTION_ROOM", "Contribution room exceeded", "contributionRoom");
+    private void validateTfsaEligibility(Customer customer) {
+        java.time.LocalDate dob = customer.getDateOfBirth();
+        if (dob == null) {
+            throw new UnprocessableException("DOB_MISSING", "Date of birth is required for TFSA eligibility", "dateOfBirth");
+        }
+        if (java.time.Period.between(dob, java.time.LocalDate.now()).getYears() < 18) {
+            throw new UnprocessableException("AGE_REQUIREMENT", "Customer must be at least 18 years old for TFSA", "dateOfBirth");
+        }
+        if (!customer.isKycVerified()) {
+            throw new UnprocessableException("KYC_REQUIRED", "Customer must be KYC verified for TFSA", "kyc");
+        }
+        boolean hasTfsa = customer.getAccounts().stream()
+                .anyMatch(a -> a.getAccountType() == AccountType.TFSA && a.getDeletedAt() == null);
+        if (hasTfsa) {
+            throw new ConflictException("TFSA_EXISTS", "Customer already has an active TFSA account", null);
         }
     }
 

@@ -98,8 +98,8 @@ public class MonetaryOperationService {
 	            boolean isAdmin = user.getRoles().stream()
 	                    .anyMatch(r -> r.name().equalsIgnoreCase("ADMIN") || r.name().equalsIgnoreCase("ROLE_ADMIN"));
 
-	            if (!isAdmin && !user.getCustomerId().equals(account.getCustomer().getCustomerId())) {
-	                result = unauthorized("UNAUTHORIZED", "You can only deposit into your own account", null);
+	            if (!isAdmin) {
+	                result = unauthorized("DEPOSIT_FORBIDDEN", "Only admins can deposit funds into accounts", null);
 	            } else {
 	                BigDecimal amount = validateAmount(request == null ? null : request.amount());
 	                if (amount == null) {
@@ -171,8 +171,8 @@ public class MonetaryOperationService {
 	            boolean isAdmin = user.getRoles().stream()
 	                    .anyMatch(r -> r.name().equalsIgnoreCase("ADMIN") || r.name().equalsIgnoreCase("ROLE_ADMIN"));
 
-	            if (!isAdmin && !user.getCustomerId().equals(account.getCustomer().getCustomerId())) {
-	                result = unauthorized("UNAUTHORIZED", "You can only withdraw from your own account", null);
+            if (!isAdmin) {
+                result = unauthorized("WITHDRAW_FORBIDDEN", "Only admins can withdraw funds from accounts", null);
 	            } else {
 	                BigDecimal amount = validateAmount(request == null ? null : request.amount());
 	                if (amount == null) {
@@ -275,9 +275,9 @@ public class MonetaryOperationService {
 	    boolean isAdmin = user.getRoles().stream()
 	            .anyMatch(r -> r.name().equalsIgnoreCase("ADMIN") || r.name().equalsIgnoreCase("ROLE_ADMIN"));
 
-	    if (!isAdmin && !user.getCustomerId().equals(from.getCustomer().getCustomerId())) {
-	        return persistAndReturn(storageKey, idempotencyKey, userId, TRANSFER,
-	                unauthorized("UNAUTHORIZED", "You can only transfer from your own account", null));
+if (!isAdmin) {
+        return persistAndReturn(storageKey, idempotencyKey, userId, TRANSFER,
+                unauthorized("TRANSFER_FORBIDDEN", "Only admins can transfer funds between accounts", null));
 	    }
 
 	    // 6️⃣ Business logic
@@ -414,15 +414,14 @@ public class MonetaryOperationService {
 	}
 
 	private BigDecimal validateAmount(BigDecimal amount) {
-
 	    if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
 	        return null;
 	    }
-
-	    if (amount.scale() > 2) {
+	    // Accept up to 2 decimal places
+	    if (amount.scale() > 2 && amount.stripTrailingZeros().scale() > 2) {
 	        return null;
 	    }
-
+	    // Optionally, round to 2 decimal places for consistency
 	    return amount.setScale(2, RoundingMode.HALF_UP);
 	}
 
