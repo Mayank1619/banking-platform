@@ -14,6 +14,7 @@ public record AccountResponse(
         AccountStatus status,
         BigDecimal balance,
         BigDecimal interestRate,
+        BigDecimal dailyTransferLimit,
         Instant createdAt,
         Instant updatedAt) {
 
@@ -25,6 +26,7 @@ public record AccountResponse(
                 account.getStatus(),
                 account.getBalance(),
                 account.getInterestRate(),
+                account.getDailyTransferLimit(),
                 account.getCreatedAt(),
                 account.getUpdatedAt());
     }

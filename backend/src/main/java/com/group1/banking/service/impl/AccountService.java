@@ -20,6 +20,7 @@ import com.group1.banking.dto.customer.UpdateAccountRequest;
 import com.group1.banking.entity.Account;
 import com.group1.banking.entity.AccountStatus;
 import com.group1.banking.entity.AccountType;
+import com.group1.banking.enums.CustomerType;
 import com.group1.banking.entity.Customer;
 import com.group1.banking.entity.User;
 import com.group1.banking.exception.ConflictException;
@@ -141,6 +142,10 @@ public class AccountService {
     }
 
     private void validateTfsaEligibility(Customer customer, BigDecimal interestRate) {
+        // Only PERSON customers can open a TFSA
+        if (customer.getType() != CustomerType.PERSON) {
+            throw new UnprocessableException("INVALID_CUSTOMER_TYPE_FOR_TFSA", "Only PERSON customers can open TFSA accounts", "type");
+        }
         if (interestRate == null) {
             throw new UnprocessableException("MISSING_INTEREST_RATE", "interestRate is required for TFSA accounts", "interestRate");
         }

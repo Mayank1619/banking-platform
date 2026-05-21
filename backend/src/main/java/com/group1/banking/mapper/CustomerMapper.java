@@ -19,6 +19,7 @@ public class CustomerMapper {
             .address(customer.getAddress())
             .type(customer.getType())
             .dateOfBirth(customer.getDateOfBirth())
+            .governmentBusinessNumber(customer.getGovernmentBusinessNumber())
             .kycVerified(customer.isKycVerified())
             .accounts(Collections.emptyList())
             .createdAt(customer.getCreatedAt())

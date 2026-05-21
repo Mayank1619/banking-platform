@@ -3,6 +3,7 @@ package com.group1.banking.dto.customer;
 import com.group1.banking.enums.CustomerType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -23,9 +24,13 @@ public class CreateCustomerRequest {
     @NotNull(message = "type is required")
     private CustomerType type;
 
-    @NotNull(message = "dateOfBirth is required")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private java.time.LocalDate dateOfBirth;
+
+    // Government Business Number for COMPANY customers (9 digits)
+    @Pattern(regexp = "^\\d{9}$", message = "governmentBusinessNumber must be exactly 9 digits")
+    @JsonProperty
+    private String governmentBusinessNumber;
 
     @JsonProperty
     private boolean kycVerified;
