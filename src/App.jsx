@@ -211,7 +211,7 @@ function AppLayout() {
           ) : (
             <>
               <NavLink className="button-link" to="/login">Login</NavLink>
-              <NavLink className="button-link" to="/register">Get Started</NavLink>
+              <NavLink className="button-link" to="/register">Register</NavLink>
             </>
           )}
         </div>
