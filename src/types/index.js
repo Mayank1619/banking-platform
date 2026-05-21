@@ -82,12 +82,13 @@ export const emptyCreateAccountForm = {
 };
 
 export const emptyRegisterForm = {
-  username: "",
-  password: "",
-  name: "",
-  address: "",
-  type: "PERSON",
-  dateOfBirth: "",
+  username: '',
+  password: '',
+  name: '',
+  address: '',
+  type: 'PERSON',
+  dateOfBirth: '',
+  governmentBusinessNumber: ''
 };
 
 export const emptyLoginForm = {
@@ -96,10 +97,11 @@ export const emptyLoginForm = {
 };
 
 export const emptyCustomerForm = {
-  name: "",
-  address: "",
-  type: "PERSON",
-  dateOfBirth: "",
+  name: '',
+  address: '',
+  type: 'PERSON',
+  dateOfBirth: '',
+  governmentBusinessNumber: ''
 };
 
 export const emptyCustomerLookup = {
