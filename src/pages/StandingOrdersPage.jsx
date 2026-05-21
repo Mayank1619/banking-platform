@@ -11,7 +11,7 @@ import {
 } from '../hooks/useGroup3';
 import { STANDING_ORDER_FREQUENCIES, TRANSACTION_CATEGORIES, emptyStandingOrderForm } from '../types';
 
-function validateStandingOrderForm(form) {
+function validateStandingOrderForm(form, maxTransferAmount) {
   if (!form.payeeAccount?.trim()) {
     return 'Payee account is required.';
   }
@@ -20,8 +20,13 @@ function validateStandingOrderForm(form) {
     return 'Payee name is required.';
   }
 
-  if (!form.amount || Number.parseFloat(form.amount) <= 0) {
+  const amount = Number.parseFloat(form.amount);
+  if (!form.amount || Number.isNaN(amount) || amount <= 0) {
     return 'Amount must be greater than zero.';
+  }
+
+  if (maxTransferAmount != null && amount > Number.parseFloat(maxTransferAmount)) {
+    return `Amount must be no more than $${Number.parseFloat(maxTransferAmount).toFixed(2)}.`;
   }
 
   if (!form.reference?.trim()) {
@@ -67,7 +72,7 @@ export function StandingOrdersPage() {
     setLocalError(null);
     setActionMessage(null);
 
-    const validationError = validateStandingOrderForm(form);
+    const validationError = validateStandingOrderForm(form, maxTransferAmount);
     if (validationError) {
       setLocalError(validationError);
       return;
@@ -102,6 +107,10 @@ export function StandingOrdersPage() {
 
   const queryError = query.error ? mapAxiosError(query.error) : null;
   const standingOrders = query.data?.standingOrders || query.data || [];
+
+  // Get current account to display daily transfer limit
+  const currentAccount = accountsQuery.data?.find(acc => acc.accountId === Number(accountId));
+  const maxTransferAmount = currentAccount?.dailyTransferLimit || null;
 
   return (
     <div className="stack">
@@ -139,10 +148,17 @@ export function StandingOrdersPage() {
             <label htmlFor="standing-order-amount">Amount</label>
             <input
               id="standing-order-amount"
+              type="number"
+              step="0.01"
+              min="0.01"
               value={form.amount}
               onChange={(event) => setForm((current) => ({ ...current, amount: event.target.value }))}
               required
+              max={maxTransferAmount ? Number.parseFloat(maxTransferAmount).toFixed(2) : undefined}
             />
+            {maxTransferAmount && (
+              <p className="field-hint">Maximum allowed: ${Number.parseFloat(maxTransferAmount).toFixed(2)}</p>
+            )}
           </div>
           <div className="field">
             <label htmlFor="standing-order-frequency">Frequency</label>

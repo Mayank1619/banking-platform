@@ -209,16 +209,28 @@ export function CustomerProfilePage() {
               readOnly
             />
           </div>
-          <div className="field">
-            <label htmlFor="profile-dob">Date of Birth</label>
-            <input
-              id="profile-dob"
-              type="date"
-              value={customer?.dateOfBirth || ''}
-              disabled
-              readOnly
-            />
-          </div>
+          {customer?.type === 'PERSON' ? (
+            <div className="field">
+              <label htmlFor="profile-dob">Date of Birth</label>
+              <input
+                id="profile-dob"
+                type="date"
+                value={customer?.dateOfBirth || ''}
+                disabled
+                readOnly
+              />
+            </div>
+          ) : (
+            <div className="field">
+              <label htmlFor="profile-gbn">Government Business Number</label>
+              <input
+                id="profile-gbn"
+                value={customer?.governmentBusinessNumber || ''}
+                disabled
+                readOnly
+              />
+            </div>
+          )}
           <p className="field-hint">Contact support to update this information.</p>
         </div>
       </div>

@@ -76,7 +76,8 @@ export const emptyRegisterForm = {
   name: '',
   address: '',
   type: 'PERSON',
-  dateOfBirth: ''
+  dateOfBirth: '',
+  governmentBusinessNumber: ''
 };
 
 export const emptyLoginForm = {
@@ -88,7 +89,8 @@ export const emptyCustomerForm = {
   name: '',
   address: '',
   type: 'PERSON',
-  dateOfBirth: ''
+  dateOfBirth: '',
+  governmentBusinessNumber: ''
 };
 
 export const emptyCustomerLookup = {
