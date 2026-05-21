@@ -87,8 +87,32 @@ export function MonthlyStatementPage() {
   const accountsQuery = useListCustomerAccounts(authState.customerId);
   const [searchParams] = useSearchParams();
   const requestedPeriod = searchParams.get("period");
-  const initialPeriod = requestedPeriod || emptyMonthlyStatementLookup.period;
-  const initial = splitPeriod(initialPeriod);
+
+  // Compute default period with correct January rollover logic
+  function getDefaultStatementPeriod() {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    let statementMonth, statementYear;
+    if (currentMonth === 1) {
+      statementMonth = 12;
+      statementYear = currentYear - 1;
+    } else {
+      statementMonth = currentMonth - 1;
+      statementYear = currentYear;
+    }
+    // Pad month to two digits
+    const monthStr = String(statementMonth).padStart(2, "0");
+    return { year: String(statementYear), month: monthStr };
+  }
+
+  let initial;
+  if (requestedPeriod) {
+    initial = splitPeriod(requestedPeriod);
+  } else {
+    initial = getDefaultStatementPeriod();
+  }
+
   const [form, setForm] = useState({
     year: initial.year,
     month: initial.month,
