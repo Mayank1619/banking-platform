@@ -22,6 +22,8 @@ import com.group1.banking.exception.ConflictException;
 import com.group1.banking.exception.NotFoundException;
 import com.group1.banking.exception.UnauthorisedException;
 import com.group1.banking.mapper.CustomerMapper;
+import com.group1.banking.exception.UnprocessableException;
+import com.group1.banking.enums.CustomerType;
 import com.group1.banking.repository.AccountRepository;
 import com.group1.banking.repository.CustomerRepository;
 import com.group1.banking.repository.UserRepository;
@@ -67,11 +69,27 @@ public class CustomerServiceImpl implements CustomerService {
                 ));
         }
 
+        // Validate fields based on customer type
+        if (request.getType() == CustomerType.PERSON) {
+            if (request.getDateOfBirth() == null) {
+                throw new UnprocessableException("MISSING_DOB", "dateOfBirth is required for PERSON", "dateOfBirth");
+            }
+        } else if (request.getType() == CustomerType.COMPANY) {
+            if (request.getGovernmentBusinessNumber() == null || request.getGovernmentBusinessNumber().trim().isEmpty()) {
+                throw new UnprocessableException("MISSING_GOVERNMENT_BUSINESS_NUMBER", "governmentBusinessNumber is required for COMPANY", "governmentBusinessNumber");
+            }
+            // Validate 9-digit format
+            if (!request.getGovernmentBusinessNumber().matches("^\\d{9}$")) {
+                throw new UnprocessableException("INVALID_GOVERNMENT_BUSINESS_NUMBER", "governmentBusinessNumber must be exactly 9 digits", "governmentBusinessNumber");
+            }
+        }
+
         Customer customer = new Customer();
         customer.setName(request.getName().trim());
         customer.setAddress(request.getAddress().trim());
         customer.setType(request.getType());
         customer.setDateOfBirth(request.getDateOfBirth());
+        customer.setGovernmentBusinessNumber(request.getGovernmentBusinessNumber());
         customer.setKycVerified(request.isKycVerified());
         customer.setCreatedAt(Instant.now());
         customer.setUpdatedAt(Instant.now());

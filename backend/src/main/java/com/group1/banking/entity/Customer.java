@@ -42,8 +42,11 @@ public class Customer {
     private CustomerType type;
 
 
-    @Column(name = "date_of_birth", nullable = false)
+    @Column(name = "date_of_birth", nullable = true)
     private java.time.LocalDate dateOfBirth;
+
+    @Column(name = "government_business_number", nullable = true)
+    private String governmentBusinessNumber;
 
     @Column(name = "kyc_verified", nullable = false)
     private boolean kycVerified;
@@ -74,6 +77,10 @@ public class Customer {
 
     public java.time.LocalDate getDateOfBirth() {
         return dateOfBirth;
+    }
+
+    public String getGovernmentBusinessNumber() {
+        return governmentBusinessNumber;
     }
 
     public boolean isKycVerified() {
