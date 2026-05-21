@@ -71,6 +71,24 @@ export function RegisterPage() {
       return;
     }
 
+    if (isPerson) {
+      if (!formState.dateOfBirth) {
+        setError({ message: 'Date of birth is required.' });
+        return;
+      }
+      const dob = new Date(formState.dateOfBirth);
+      const today = new Date();
+      let age = today.getFullYear() - dob.getFullYear();
+      const m = today.getMonth() - dob.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+        age--;
+      }
+      if (age < 18) {
+        setError({ message: 'You must be 18 years or above to open an account.' });
+        return;
+      }
+    }
+
     try {
       const { authResponse, customerResponse } = await mutation.mutateAsync(formState);
       // Set auth state and customer context for auto-login
