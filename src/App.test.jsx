@@ -99,10 +99,10 @@ describe('Navbar and Sub-Navbar (AppLayout)', () => {
       expect(screen.getByRole('img', { name: /voltio/i })).toBeInTheDocument();
     });
 
-    it('shows Login and Get Started links instead of the avatar', () => {
+    it('shows Login and Register links instead of the avatar', () => {
       renderApp();
       expect(screen.getByRole('link', { name: 'Login' })).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'Get Started' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Register' })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /open profile menu/i })).not.toBeInTheDocument();
     });
 
@@ -119,10 +119,10 @@ describe('Navbar and Sub-Navbar (AppLayout)', () => {
       expect(screen.getByText('U')).toBeInTheDocument();
     });
 
-    it('does not show Login or Get Started links', () => {
+    it('does not show Login or Register links', () => {
       renderApp();
       expect(screen.queryByRole('link', { name: 'Login' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('link', { name: 'Get Started' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'Register' })).not.toBeInTheDocument();
     });
   });
 

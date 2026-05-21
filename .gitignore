@@ -9,7 +9,7 @@ frontend/dist/
 # Vite cache
 .vite/
 frontend/.vite/
-
+.env
 # Database files
 data/
 *.mv.db

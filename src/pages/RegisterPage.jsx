@@ -30,9 +30,13 @@ export function RegisterPage() {
         name: form.name,
         address: form.address,
         type: form.type,
-        dateOfBirth: form.dateOfBirth || '1998-10-26',
         kycVerified: KYC_VERIFIED_DEFAULT
       };
+      if (form.type === 'PERSON') {
+        customerPayload.dateOfBirth = form.dateOfBirth || '1998-10-26';
+      } else {
+        customerPayload.governmentBusinessNumber = form.governmentBusinessNumber;
+      }
 
       await registerUser(authPayload);
       const authResponse = await loginUser(authPayload);
@@ -69,6 +73,24 @@ export function RegisterPage() {
     if (!formState.address.trim()) {
       setError({ message: 'Address is required.' });
       return;
+    }
+
+    if (isPerson) {
+      if (!formState.dateOfBirth) {
+        setError({ message: 'Date of birth is required.' });
+        return;
+      }
+      const dob = new Date(formState.dateOfBirth);
+      const today = new Date();
+      let age = today.getFullYear() - dob.getFullYear();
+      const m = today.getMonth() - dob.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+        age--;
+      }
+      if (age < 18) {
+        setError({ message: 'You must be 18 years or above to open an account.' });
+        return;
+      }
     }
 
     try {
@@ -173,16 +195,31 @@ export function RegisterPage() {
                   onChange={(event) => setFormState((current) => ({ ...current, address: event.target.value }))}
                 />
               </div>
-              <div className="field">
-                <label htmlFor="register-dob">Date of Birth</label>
-                <input
-                  id="register-dob"
-                  type="date"
-                  value={formState.dateOfBirth}
-                  onChange={(event) => setFormState((current) => ({ ...current, dateOfBirth: event.target.value }))}
-                />
-                <p className="field-hint">Required for TFSA accounts. Defaults to 1998-10-26 if left blank.</p>
-              </div>
+              {isPerson ? (
+                <div className="field">
+                  <label htmlFor="register-dob">Date of Birth</label>
+                  <input
+                    id="register-dob"
+                    type="date"
+                    value={formState.dateOfBirth}
+                    onChange={(event) => setFormState((current) => ({ ...current, dateOfBirth: event.target.value }))}
+                  />
+                  <p className="field-hint">Required for TFSA accounts. Defaults to 1998-10-26 if left blank.</p>
+                </div>
+              ) : (
+                <div className="field">
+                  <label htmlFor="register-gbn">Government Business Number</label>
+                  <input
+                    id="register-gbn"
+                    value={formState.governmentBusinessNumber}
+                    onChange={(event) => setFormState((current) => ({ ...current, governmentBusinessNumber: event.target.value }))}
+                    placeholder="9-digit number"
+                    maxLength="9"
+                    pattern="[0-9]{9}"
+                  />
+                  <p className="field-hint">9-digit number required for business accounts.</p>
+                </div>
+              )}
             </div>
           )}
           <div className="actions">

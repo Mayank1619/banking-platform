@@ -64,6 +64,20 @@ export function CustomerCreatePage() {
               onChange={(event) => setFormState((current) => ({ ...current, address: event.target.value }))}
             />
           </div>
+          {formState.type === 'COMPANY' && (
+            <div className="field full">
+              <label htmlFor="customer-gbn">Government Business Number</label>
+              <input
+                id="customer-gbn"
+                value={formState.governmentBusinessNumber}
+                onChange={(event) => setFormState((current) => ({ ...current, governmentBusinessNumber: event.target.value }))}
+                placeholder="9-digit number"
+                maxLength="9"
+                pattern="[0-9]{9}"
+              />
+              <p className="field-hint">9-digit number.</p>
+            </div>
+          )}
         </div>
         <div className="actions">
           <button type="submit" disabled={mutation.isPending}>Create Customer</button>
