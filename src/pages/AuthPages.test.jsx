@@ -170,6 +170,7 @@ describe('auth pages', () => {
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'secret' } });
     fireEvent.change(screen.getByLabelText('Full Name'), { target: { value: 'New Customer' } });
     fireEvent.change(screen.getByLabelText('Address'), { target: { value: '1 Main St' } });
+    fireEvent.change(screen.getByLabelText(/Date of Birth/i), { target: { value: '1998-10-26' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create Account' }));
 
     await waitFor(() => {
