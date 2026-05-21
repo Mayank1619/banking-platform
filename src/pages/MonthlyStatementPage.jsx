@@ -1,49 +1,49 @@
-import { useState } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { mapAxiosError } from '../api/axiosClient';
-import { AccountSwitcher } from '../components/AccountSwitcher';
-import { useAuth } from '../auth/AuthContext';
-import { useListCustomerAccounts } from '../hooks/useListCustomerAccounts';
-import { useMonthlyStatement } from '../hooks/useGroup3';
-import { emptyMonthlyStatementLookup } from '../types';
+import { useMemo, useState } from "react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
+import { mapAxiosError } from "../api/axiosClient";
+import { AccountSwitcher } from "../components/AccountSwitcher";
+import { useAuth } from "../auth/AuthContext";
+import { useListCustomerAccounts } from "../hooks/useListCustomerAccounts";
+import { useMonthlyStatement } from "../hooks/useGroup3";
+import { emptyMonthlyStatementLookup } from "../types";
 
 const MONTH_OPTIONS = [
-  { value: '01', label: 'January' },
-  { value: '02', label: 'February' },
-  { value: '03', label: 'March' },
-  { value: '04', label: 'April' },
-  { value: '05', label: 'May' },
-  { value: '06', label: 'June' },
-  { value: '07', label: 'July' },
-  { value: '08', label: 'August' },
-  { value: '09', label: 'September' },
-  { value: '10', label: 'October' },
-  { value: '11', label: 'November' },
-  { value: '12', label: 'December' }
+  { value: "01", label: "January" },
+  { value: "02", label: "February" },
+  { value: "03", label: "March" },
+  { value: "04", label: "April" },
+  { value: "05", label: "May" },
+  { value: "06", label: "June" },
+  { value: "07", label: "July" },
+  { value: "08", label: "August" },
+  { value: "09", label: "September" },
+  { value: "10", label: "October" },
+  { value: "11", label: "November" },
+  { value: "12", label: "December" },
 ];
 
 function splitPeriod(period) {
-  const [year = '', month = ''] = String(period || '').split('-');
+  const [year = "", month = ""] = String(period || "").split("-");
   return { year, month };
 }
 
 function joinPeriod(year, month) {
   if (!year || !month) {
-    return '';
+    return "";
   }
 
   return `${year}-${month}`;
 }
 
 function parseYearMonth(period) {
-  const match = String(period || '').match(/^(\d{4})-(\d{2})$/);
+  const match = String(period || "").match(/^(\d{4})-(\d{2})$/);
   if (!match) {
     return null;
   }
 
   return {
     year: Number(match[1]),
-    month: Number(match[2])
+    month: Number(match[2]),
   };
 }
 
@@ -56,7 +56,10 @@ function isFuturePeriod(period) {
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1;
-  return parsed.year > currentYear || (parsed.year === currentYear && parsed.month > currentMonth);
+  return (
+    parsed.year > currentYear ||
+    (parsed.year === currentYear && parsed.month > currentMonth)
+  );
 }
 
 function resolveStatementErrorMessage(queryError, submittedPeriod) {
@@ -65,11 +68,14 @@ function resolveStatementErrorMessage(queryError, submittedPeriod) {
   }
 
   if (isFuturePeriod(submittedPeriod)) {
-    return 'Statement month cannot be in the future. Please choose the current month or an earlier month.';
+    return "Statement month cannot be in the future. Please choose the current month or an earlier month.";
   }
 
-  if (queryError.code === 'HTTP_500' || queryError.code === 'INTERNAL_SERVER_ERROR') {
-    return 'Statement is not available for the selected month. Please choose a month when this account was already open.';
+  if (
+    queryError.code === "HTTP_500" ||
+    queryError.code === "INTERNAL_SERVER_ERROR"
+  ) {
+    return "Statement is not available for the selected month. Please choose a month when this account was already open.";
   }
 
   return queryError.message;
@@ -80,36 +86,32 @@ export function MonthlyStatementPage() {
   const { authState } = useAuth();
   const accountsQuery = useListCustomerAccounts(authState.customerId);
   const [searchParams] = useSearchParams();
-  const requestedPeriod = searchParams.get('period');
+  const requestedPeriod = searchParams.get("period");
   const initialPeriod = requestedPeriod || emptyMonthlyStatementLookup.period;
   const initial = splitPeriod(initialPeriod);
-  const [form, setForm] = useState({ year: initial.year, month: initial.month });
-  const [submittedPeriod, setSubmittedPeriod] = useState('');
-  const query = useMonthlyStatement({ accountId, period: submittedPeriod });
-
-  function handleSubmit(event) {
-    event.preventDefault();
-    const period = joinPeriod(form.year, form.month);
-    if (!period) {
-      return;
-    }
-
-    setSubmittedPeriod(period);
-  }
+  const [form, setForm] = useState({
+    year: initial.year,
+    month: initial.month,
+  });
+  const selectedPeriod = useMemo(
+    () => joinPeriod(form.year, form.month),
+    [form.month, form.year],
+  );
+  const query = useMonthlyStatement({ accountId, period: selectedPeriod });
 
   const statementPdf = query.data;
   const queryError = query.error ? mapAxiosError(query.error) : null;
-  const errorMessage = resolveStatementErrorMessage(queryError, submittedPeriod);
+  const errorMessage = resolveStatementErrorMessage(queryError, selectedPeriod);
 
   function handleDownloadStatement() {
-    if (!statementPdf || !submittedPeriod) {
+    if (!statementPdf || !selectedPeriod) {
       return;
     }
 
     const downloadUrl = window.URL.createObjectURL(statementPdf);
-    const anchor = document.createElement('a');
+    const anchor = document.createElement("a");
     anchor.href = downloadUrl;
-    anchor.download = `statement-${accountId}-${submittedPeriod}.pdf`;
+    anchor.download = `statement-${accountId}-${selectedPeriod}.pdf`;
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
@@ -122,11 +124,20 @@ export function MonthlyStatementPage() {
         <div className="section-header">
           <div>
             <h2>Monthly Statement</h2>
-            <p className="muted">Request a monthly statement PDF for a specific year and month.</p>
+            <p className="muted">
+              Request a monthly statement PDF for a specific year and month.
+            </p>
           </div>
-          <AccountSwitcher accountId={accountId} accounts={accountsQuery.data} feature="statements" />
+          <AccountSwitcher
+            accountId={accountId}
+            accounts={accountsQuery.data}
+            feature="statements"
+          />
         </div>
-        <form className="form-grid" onSubmit={handleSubmit}>
+        <form
+          className="form-grid"
+          onSubmit={(event) => event.preventDefault()}
+        >
           <div className="field">
             <label htmlFor="statement-year">Statement Year</label>
             <input
@@ -136,7 +147,9 @@ export function MonthlyStatementPage() {
               max="9999"
               step="1"
               value={form.year}
-              onChange={(event) => setForm((current) => ({ ...current, year: event.target.value }))}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, year: event.target.value }))
+              }
               placeholder="e.g. 2026"
               required
             />
@@ -146,38 +159,60 @@ export function MonthlyStatementPage() {
             <select
               id="statement-month"
               value={form.month}
-              onChange={(event) => setForm((current) => ({ ...current, month: event.target.value }))}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  month: event.target.value,
+                }))
+              }
               required
             >
               <option value="">Select month</option>
               {MONTH_OPTIONS.map((month) => (
-                <option key={month.value} value={month.value}>{month.label}</option>
+                <option key={month.value} value={month.value}>
+                  {month.label}
+                </option>
               ))}
             </select>
           </div>
           <div className="actions">
-            <button type="submit" disabled={query.isFetching}>Load Statement</button>
-            <Link className="button-link subtle" to={`/accounts/${accountId}`}>Back to Account</Link>
+            <Link className="button-link subtle" to={`/accounts/${accountId}`}>
+              Back to Account
+            </Link>
           </div>
         </form>
-        {query.isLoading || query.isFetching ? <div className="banner success">Loading monthly statement...</div> : null}
-        {errorMessage ? <div className="banner error">{errorMessage}</div> : null}
-        {!submittedPeriod ? <div className="banner info">Pick a statement month and click Load Statement to request data.</div> : null}
+        {query.isLoading || query.isFetching ? (
+          <div className="banner success">Loading monthly statement...</div>
+        ) : null}
+        {errorMessage ? (
+          <div className="banner error">{errorMessage}</div>
+        ) : null}
+        {!selectedPeriod ? (
+          <div className="banner info">
+            Pick a statement month to request data.
+          </div>
+        ) : null}
       </section>
 
       <section className="panel stack">
         <div className="section-header">
           <div>
             <h3>Statement File</h3>
-            <p className="muted">Requested period: {submittedPeriod || 'None selected'}</p>
+            <p className="muted">
+              Requested period: {selectedPeriod || "None selected"}
+            </p>
           </div>
         </div>
         {statementPdf ? (
           <div className="actions">
-            <button type="button" onClick={handleDownloadStatement}>Download Statement PDF</button>
+            <button type="button" onClick={handleDownloadStatement}>
+              Download Statement PDF
+            </button>
           </div>
         ) : (
-          <div className="banner info">Load a statement period to generate a downloadable PDF.</div>
+          <div className="banner info">
+            Load a statement period to generate a downloadable PDF.
+          </div>
         )}
       </section>
     </div>
