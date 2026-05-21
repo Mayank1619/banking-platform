@@ -1,45 +1,48 @@
-import { fileURLToPath } from 'node:url';
-import { defineConfig, loadEnv } from 'vite';
-import react from '@vitejs/plugin-react';
+import { fileURLToPath } from "node:url";
+import { defineConfig, loadEnv } from "vite";
+import react from "@vitejs/plugin-react";
 
-const testSetupFile = fileURLToPath(new URL('./src/test/setup.js', import.meta.url));
+const testSetupFile = fileURLToPath(
+  new URL("./src/test/setup.js", import.meta.url),
+);
 
 export default defineConfig(({ mode }) => {
-  loadEnv(mode, process.cwd(), '');
-  const backendTarget = 'http://localhost:8080';
-
+  loadEnv(mode, process.cwd(), "");
+  const backendTarget =
+    "http://banking-platform-backend.dev-banking-backend.svc.cluster.local:8080/";
+  // const backendTarget = 'http://localhost:8080';
   return {
     plugins: [react()],
     test: {
-      environment: 'jsdom',
+      environment: "jsdom",
       globals: true,
-      setupFiles: testSetupFile
+      setupFiles: testSetupFile,
     },
     preview: {
-      allowedHosts: ['frontend-524103119199.northamerica-northeast2.run.app'],
-      host: '0.0.0.0',
-      port: 8080
-    },   
+      allowedHosts: ["frontend-524103119199.northamerica-northeast2.run.app"],
+      host: "0.0.0.0",
+      port: 8080,
+    },
     server: {
       port: 5173,
       proxy: {
-        '/api': {
+        "/api": {
           target: backendTarget,
           changeOrigin: true,
         },
-        '/accounts': {
+        "/accounts": {
           target: backendTarget,
           changeOrigin: true,
         },
-        '/customers': {
+        "/customers": {
           target: backendTarget,
           changeOrigin: true,
         },
-        '/standing-orders': {
+        "/standing-orders": {
           target: backendTarget,
           changeOrigin: true,
-        }
-      }
-    }
+        },
+      },
+    },
   };
 });
