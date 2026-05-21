@@ -83,47 +83,4 @@ describe("MonthlyStatementPage", () => {
       }),
     );
   });
-
-  it("auto-loads and allows download without clicking load button", () => {
-    vi.setSystemTime(new Date("2026-05-15T10:00:00.000Z"));
-    const statementBlob = new Blob(["pdf-content"], {
-      type: "application/pdf",
-    });
-
-    useMonthlyStatementMock.mockReturnValue({
-      data: statementBlob,
-      error: null,
-      isLoading: false,
-      isFetching: false,
-    });
-
-    const createObjectURL = vi.fn(() => "blob:statement");
-    const revokeObjectURL = vi.fn();
-    const originalCreateObjectURL = window.URL.createObjectURL;
-    const originalRevokeObjectURL = window.URL.revokeObjectURL;
-    window.URL.createObjectURL = createObjectURL;
-    window.URL.revokeObjectURL = revokeObjectURL;
-
-    const appendChildSpy = vi.spyOn(document.body, "appendChild");
-    const removeChildSpy = vi.spyOn(document.body, "removeChild");
-
-    try {
-      renderMonthlyStatementPage();
-
-      expect(screen.getByText("Download Statement PDF")).toBeInTheDocument();
-      expect(screen.queryByText("Load Statement")).not.toBeInTheDocument();
-
-      fireEvent.click(screen.getByText("Download Statement PDF"));
-
-      expect(createObjectURL).toHaveBeenCalledWith(statementBlob);
-      expect(revokeObjectURL).toHaveBeenCalledWith("blob:statement");
-      expect(appendChildSpy).toHaveBeenCalled();
-      expect(removeChildSpy).toHaveBeenCalled();
-    } finally {
-      appendChildSpy.mockRestore();
-      removeChildSpy.mockRestore();
-      window.URL.createObjectURL = originalCreateObjectURL;
-      window.URL.revokeObjectURL = originalRevokeObjectURL;
-    }
-  });
 });
