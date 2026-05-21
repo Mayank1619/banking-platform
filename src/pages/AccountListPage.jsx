@@ -64,13 +64,13 @@ export function AccountListPage() {
     }
 
     try {
-      const createdAccount = await createAccountMutation.mutateAsync({
-        ...formState,
+      const payload = {
+        accountType: formState.accountType,
         customerId,
-        balance: formState.balance,
-        interestRate: formState.interestRate,
+        ...(isAdmin ? { balance: formState.balance, interestRate: formState.interestRate } : {}),
         ...(formState.accountType === 'TFSA' ? { dateOfBirth: customerQuery.data?.dateOfBirth } : {})
-      });
+      };
+      const createdAccount = await createAccountMutation.mutateAsync(payload);
       setActionMessage(`Account ${createdAccount.accountId} created successfully.`);
       setFormState(emptyCreateAccountForm);
       setIsCreateModalOpen(false);
@@ -97,8 +97,8 @@ export function AccountListPage() {
     navigate(`/customer/${nextCustomerId}/accounts`);
   }
 
-  const showInterestRate = formState.accountType === 'SAVINGS' || formState.accountType === 'TFSA';
-  const showBalance = formState.accountType !== 'RRSP';
+  const showInterestRate = isAdmin && (formState.accountType === 'SAVINGS' || formState.accountType === 'TFSA');
+  const showBalance = isAdmin && formState.accountType !== 'RRSP';
   const existingTypes = new Set((query.data || []).map((a) => a.accountType));
   const isDuplicateType = existingTypes.has(formState.accountType);
   const isTfsa = formState.accountType === 'TFSA';
