@@ -1,6 +1,8 @@
 package com.group1.banking.service.impl;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.Period;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -17,10 +19,12 @@ import com.group1.banking.dto.customer.PatchCustomerRequest;
 import com.group1.banking.entity.AccountStatus;
 import com.group1.banking.entity.Customer;
 import com.group1.banking.entity.User;
+import com.group1.banking.enums.CustomerType;
 import com.group1.banking.exception.BadRequestException;
 import com.group1.banking.exception.ConflictException;
 import com.group1.banking.exception.NotFoundException;
 import com.group1.banking.exception.UnauthorisedException;
+import com.group1.banking.exception.UnprocessableException;
 import com.group1.banking.mapper.CustomerMapper;
 import com.group1.banking.repository.AccountRepository;
 import com.group1.banking.repository.CustomerRepository;
@@ -65,6 +69,14 @@ public class CustomerServiceImpl implements CustomerService {
                     "userId", user.getUserId(),
                     "customerId", user.getCustomerId()
                 ));
+        }
+
+        if (request.getType() == CustomerType.PERSON) {
+            LocalDate dob = request.getDateOfBirth();
+            if (dob == null || Period.between(dob, LocalDate.now()).getYears() < 18) {
+                throw new UnprocessableException("AGE_REQUIREMENT",
+                        "You must be 18 years or above to open an account", "dateOfBirth");
+            }
         }
 
         Customer customer = new Customer();
