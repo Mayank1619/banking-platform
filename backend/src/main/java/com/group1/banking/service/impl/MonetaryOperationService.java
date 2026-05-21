@@ -37,6 +37,7 @@ import com.group1.banking.repository.UserRepository;
 import com.group1.banking.security.AuthenticatedUser;
 import com.group1.banking.security.CustomUserPrincipal;
 import com.group1.banking.service.AuthService;
+import com.group1.banking.service.AuditService;
 
 @Service
 public class MonetaryOperationService {
@@ -52,16 +53,18 @@ public class MonetaryOperationService {
 	private final AuthService authorizationService;
 	private final ObjectMapper objectMapper;
 	private final UserRepository userRepository;
+	private final AuditService auditService;
 
 	public MonetaryOperationService(AccountRepository accountRepository, TransactionRepository transactionRepository,
 			IdempotencyRecordRepository idempotencyRecordRepository, AuthService authorizationService,
-			ObjectMapper objectMapper, UserRepository userRepository) {
+			ObjectMapper objectMapper, UserRepository userRepository, AuditService auditService) {
 		this.accountRepository = accountRepository;
 		this.transactionRepository = transactionRepository;
 		this.idempotencyRecordRepository = idempotencyRecordRepository;
 		this.authorizationService = authorizationService;
 		this.objectMapper = objectMapper;
 		this.userRepository = userRepository;
+		this.auditService = auditService;
 	}
 
 	
@@ -95,43 +98,54 @@ public class MonetaryOperationService {
 	            User user = userRepository.findById(userId)
 	                    .orElseThrow(() -> new UnauthorisedException("UNAUTHORIZED", "User not found"));
 
-	            boolean isAdmin = user.getRoles().stream()
-	                    .anyMatch(r -> r.name().equalsIgnoreCase("ADMIN") || r.name().equalsIgnoreCase("ROLE_ADMIN"));
+				boolean isAdmin = user.getRoles().stream()
+						.anyMatch(r -> r.name().equalsIgnoreCase("ADMIN") || r.name().equalsIgnoreCase("ROLE_ADMIN"));
 
-	            if (!isAdmin && !user.getCustomerId().equals(account.getCustomer().getCustomerId())) {
-	                result = unauthorized("UNAUTHORIZED", "You can only deposit into your own account", null);
-	            } else {
-	                BigDecimal amount = validateAmount(request == null ? null : request.amount());
-	                if (amount == null) {
-	                    result = unprocessable("INVALID_AMOUNT",
-	                            "Amount must be greater than 0 with at most 2 decimal places", "amount");
-	                } else {
-	                    result = validateDescription(request == null ? null : request.description());
-	                    if (result == null) {
-	                        account.setBalance(account.getBalance().add(amount));
+				// Only admins can deposit/add balance
+				if (!isAdmin) {
+					result = unauthorized("FORBIDDEN", "Only admins can deposit/add balance to accounts", null);
+				} else {
+					BigDecimal amount = validateAmount(request == null ? null : request.amount());
+					if (amount == null) {
+						result = unprocessable("INVALID_AMOUNT",
+								"Amount must be greater than 0 with at most 2 decimal places", "amount");
+					} else {
+						result = validateDescription(request == null ? null : request.description());
+						if (result == null) {
+							account.setBalance(account.getBalance().add(amount));
 
-	                        Transaction transaction = createTransaction(
-	                                account,
-	                                amount,
-	                                TransactionDirection.CREDIT,
-	                                TransactionStatus.SUCCESS,
-	                                request.description(),
-	                                "External deposit",
-	                                null,
-	                                idempotencyKey
-	                        );
+							Transaction transaction = createTransaction(
+									account,
+									amount,
+									TransactionDirection.CREDIT,
+									TransactionStatus.SUCCESS,
+									request.description(),
+									"External deposit",
+									null,
+									idempotencyKey
+							);
 
-	                        accountRepository.save(account);
-	                        transactionRepository.save(transaction);
+							accountRepository.save(account);
+							transactionRepository.save(transaction);
 
-	                        result = ok(new MonetaryOperationResponse(
-	                                "Deposit completed successfully",
-	                                AccountResponse.from(account),
-	                                TransactionResponse.from(transaction)
-	                        ));
-	                    }
-	                }
-	            }
+							// Audit log for admin deposit
+							auditService.log(
+								user.getUserId().toString(),
+								"ADMIN",
+								"DEPOSIT",
+								"ACCOUNT",
+								account.getAccountId().toString(),
+								"SUCCESS"
+							);
+
+							result = ok(new MonetaryOperationResponse(
+									"Deposit completed successfully",
+									AccountResponse.from(account),
+									TransactionResponse.from(transaction)
+							));
+						}
+					}
+				}
 	        }
 	    }
 

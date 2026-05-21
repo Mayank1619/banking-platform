@@ -41,6 +41,9 @@ import static org.mockito.Mockito.*;
 class MonetaryOperationServiceTest {
 
     @Mock
+    private AuditService auditService;
+
+    @Mock
     private AccountRepository accountRepository;
 
     @Mock
@@ -72,8 +75,8 @@ class MonetaryOperationServiceTest {
         // Inject real ObjectMapper - since @InjectMocks won't pick it up properly with @Mock,
         // we need to create service manually or inject via reflection
         monetaryOperationService = new MonetaryOperationService(
-                accountRepository, transactionRepository, idempotencyRecordRepository,
-                authorizationService, objectMapper, userRepository);
+            accountRepository, transactionRepository, idempotencyRecordRepository,
+            authorizationService, objectMapper, userRepository, auditService);
 
         userId = UUID.randomUUID();
 

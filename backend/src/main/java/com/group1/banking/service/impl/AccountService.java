@@ -59,9 +59,31 @@ public class AccountService {
         User user = getAuthenticatedUser();
         Customer customer = loadCustomer(customerId);
         checkAuthorization(user, customerId);
-        validateCreateRequest(request, customer);
 
-        Account account = buildAccount(request, customer);
+        // Always set default balance and interest rate if missing
+        BigDecimal defaultBalance = BigDecimal.ZERO.setScale(2);
+        BigDecimal interestRate = request.interestRate();
+        switch (request.accountType()) {
+            case SAVINGS -> {
+                if (interestRate == null) interestRate = new BigDecimal("0.0100");
+            }
+            case TFSA -> {
+                if (interestRate == null) interestRate = new BigDecimal("0.0200");
+            }
+            case RRSP -> {
+                if (interestRate == null) interestRate = new BigDecimal("0.0250");
+            }
+            case CHECKING -> {
+                interestRate = null;
+            }
+        }
+        CreateAccountRequest effectiveRequest = new CreateAccountRequest(
+            request.accountType(),
+            defaultBalance,
+            interestRate
+        );
+        validateCreateRequest(effectiveRequest, customer);
+        Account account = buildAccount(effectiveRequest, customer);
         return AccountResponse.from(accountRepository.save(account));
     }
 
@@ -116,9 +138,9 @@ public class AccountService {
     private void validateCreateRequest(CreateAccountRequest request, Customer customer) {
         AccountType type = request.accountType();
         BigDecimal interestRate = request.interestRate();
-        if (type == AccountType.SAVINGS) {
+        if (type == AccountType.SAVINGS || type == AccountType.RRSP) {
             if (interestRate == null) {
-                throw new UnprocessableException("MISSING_INTEREST_RATE", "interestRate is required for SAVINGS accounts", "interestRate");
+                throw new UnprocessableException("MISSING_INTEREST_RATE", "interestRate is required for " + type + " accounts", "interestRate");
             }
             if (interestRate.scale() > 4 || interestRate.compareTo(BigDecimal.ZERO) < 0) {
                 throw new UnprocessableException("INVALID_INTEREST_RATE", "interestRate must be non-negative with at most 4 decimal places", "interestRate");
@@ -237,8 +259,12 @@ public class AccountService {
         account.setCustomer(customer);
         account.setAccountType(request.accountType());
         account.setStatus(AccountStatus.ACTIVE);
-        account.setBalance(scaleMoney(request.balance()));
+        // If balance is null, set to 0.00
+        BigDecimal balance = request.balance() != null ? request.balance() : BigDecimal.ZERO.setScale(2);
+        account.setBalance(scaleMoney(balance));
         account.setInterestRate(request.interestRate());
+        // Set default daily transfer limit (e.g., 10000.00)
+        account.setDailyTransferLimit(new java.math.BigDecimal("10000.00").setScale(2));
         return account;
     }
 
