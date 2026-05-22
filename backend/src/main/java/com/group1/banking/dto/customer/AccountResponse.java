@@ -1,12 +1,12 @@
 package com.group1.banking.dto.customer;
- 
+
 import java.math.BigDecimal;
 import java.time.Instant;
- 
+
 import com.group1.banking.entity.Account;
 import com.group1.banking.entity.AccountStatus;
 import com.group1.banking.entity.AccountType;
- 
+
 public record AccountResponse(
         Long accountId,
         Long customerId,
@@ -14,9 +14,10 @@ public record AccountResponse(
         AccountStatus status,
         BigDecimal balance,
         BigDecimal interestRate,
+        BigDecimal dailyTransferLimit,
         Instant createdAt,
         Instant updatedAt) {
- 
+
     public static AccountResponse from(Account account) {
         return new AccountResponse(
                 account.getAccountId(),
@@ -25,6 +26,7 @@ public record AccountResponse(
                 account.getStatus(),
                 account.getBalance(),
                 account.getInterestRate(),
+                account.getDailyTransferLimit(),
                 account.getCreatedAt(),
                 account.getUpdatedAt());
     }
