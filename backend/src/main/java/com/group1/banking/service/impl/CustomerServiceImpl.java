@@ -26,9 +26,12 @@ import com.group1.banking.exception.NotFoundException;
 import com.group1.banking.exception.UnauthorisedException;
 import com.group1.banking.exception.UnprocessableException;
 import com.group1.banking.mapper.CustomerMapper;
+import com.group1.banking.exception.UnprocessableException;
+import com.group1.banking.enums.CustomerType;
 import com.group1.banking.repository.AccountRepository;
 import com.group1.banking.repository.CustomerRepository;
 import com.group1.banking.repository.UserRepository;
+import com.group1.banking.security.AuthenticatedUser;
 import com.group1.banking.security.CustomUserPrincipal;
 import com.group1.banking.service.CustomerService;
 
