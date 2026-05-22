@@ -66,6 +66,15 @@ public class AccountService {
         User user = getAuthenticatedUser();
         Customer customer = loadCustomer(customerId);
         checkAuthorization(user, customerId);
+
+        if (request.accountType() == AccountType.TFSA && !isAdmin(user)) {
+            BigDecimal requestedBalance = request.balance();
+            if (requestedBalance != null && requestedBalance.compareTo(BigDecimal.ZERO) > 0) {
+                throw new UnprocessableException("TFSA_BALANCE_NOT_ALLOWED",
+                        "Customers cannot set an opening balance for TFSA accounts", "balance");
+            }
+        }
+
         validateCreateRequest(request, customer);
 
         Account account = buildAccount(request, customer);
