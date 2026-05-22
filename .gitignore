@@ -42,3 +42,4 @@ Thumbs.db
 group123-backend/
 spec_frontend.md
 vite.config.js
+.env

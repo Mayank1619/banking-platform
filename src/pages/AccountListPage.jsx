@@ -97,8 +97,8 @@ export function AccountListPage() {
     navigate(`/customer/${nextCustomerId}/accounts`);
   }
 
-  const showInterestRate = formState.accountType === 'SAVINGS' || formState.accountType === 'TFSA';
-  const showBalance = formState.accountType !== 'RRSP';
+  const showInterestRate = formState.accountType === 'SAVINGS' || (formState.accountType === 'TFSA' && isAdmin);
+  const showBalance = formState.accountType !== 'RRSP' && (formState.accountType !== 'TFSA' || isAdmin);
   const existingTypes = new Set((query.data || []).map((a) => a.accountType));
   const isDuplicateType = existingTypes.has(formState.accountType);
   const isTfsa = formState.accountType === 'TFSA';
