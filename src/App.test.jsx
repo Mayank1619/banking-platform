@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
+import { ThemeProvider } from './theme/ThemeContext';
 
 const mockLogout = vi.fn();
 const mockNavigate = vi.fn();
@@ -60,9 +61,11 @@ vi.mock('./pages/SpendingInsightsPage', () => ({ SpendingInsightsPage: () => nul
 
 function renderApp(initialEntry = '/') {
   return render(
-    <MemoryRouter initialEntries={[initialEntry]}>
-      <App />
-    </MemoryRouter>
+    <ThemeProvider>
+      <MemoryRouter initialEntries={[initialEntry]}>
+        <App />
+      </MemoryRouter>
+    </ThemeProvider>
   );
 }
 
