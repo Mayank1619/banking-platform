@@ -4,7 +4,6 @@ import { useAuth } from './auth/AuthContext';
 import { ProtectedRoute } from './auth/ProtectedRoute';
 import { FeatureGuard } from './components/FeatureGuard';
 import { useListCustomerAccounts } from './hooks/useListCustomerAccounts';
-import { useTheme } from './theme/ThemeContext';
 import { AccountDetailPage } from './pages/AccountDetailPage';
 import { AccountListPage } from './pages/AccountListPage';
 import { CustomerCreatePage } from './pages/CustomerCreatePage';
@@ -27,6 +26,7 @@ import { TransactionHistoryPage } from './pages/TransactionHistoryPage';
 import { TransferPage } from './pages/TransferPage';
 import { WithdrawPage } from './pages/WithdrawPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { useTheme } from './theme/ThemeContext';
 
 import voltioIcon from './images/Voltio_icon.png';
 import voltioIconGreen from './images/Voltio_icon_green.png';
@@ -93,7 +93,7 @@ function getActiveAccountIdFromPath(pathname) {
 
 function AppLayout() {
   const { authState, isAdmin, isAuthenticated } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { isClassic, toggleTheme } = useTheme();
   const customerId = authState.customerId;
   const location = useLocation();
   const navigate = useNavigate();
@@ -188,23 +188,21 @@ function AppLayout() {
   const hasAccounts = accountsQuery.data ? accountsQuery.data.length > 0 : false;
   const isOnFeaturePage = FEATURE_SEGMENTS.some((seg) => isFeatureActive(seg));
   const showFeatureButtons = isAdmin || accountsQuery.isLoading || hasAccounts || isOnFeaturePage;
-  const activeLogo = theme === 'classic' ? voltioIconGreen : voltioIcon;
-  const activeThemeLabel = theme === 'classic' ? 'Classic' : 'New';
 
   return (
     <div className="app-shell">
       <header className="navbar">
         <NavLink className="navbar-brand navbar-brand-link" to="/">
-          <img src={activeLogo} alt="Voltio" className="navbar-logo" />
+          <img src={isClassic ? voltioIconGreen : voltioIcon} alt="Voltio" className="navbar-logo" />
         </NavLink>
         <div className="navbar-actions">
           <button
             type="button"
             className="theme-toggle-btn"
             onClick={toggleTheme}
-            aria-label={`Switch theme. Active theme: ${activeThemeLabel}`}
+            aria-label="Toggle theme"
           >
-            Theme: {activeThemeLabel}
+            {isClassic ? 'Theme: Classic' : 'Theme: New'}
           </button>
           {isAuthenticated ? (
             <div className="navbar-profile" ref={dropdownRef}>

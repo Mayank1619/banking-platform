@@ -1,13 +1,8 @@
-const THEME_STORAGE_KEY = 'banking-app-theme';
-
+export const THEME_STORAGE_KEY = 'banking-app-theme';
 export const DEFAULT_THEME = 'new';
 
-function normalizeTheme(theme) {
-  if (theme === 'classic' || theme === 'new') {
-    return theme;
-  }
-
-  return DEFAULT_THEME;
+export function normalizeTheme(theme) {
+  return theme === 'classic' ? 'classic' : DEFAULT_THEME;
 }
 
 export function readStoredTheme() {
@@ -15,8 +10,7 @@ export function readStoredTheme() {
     return DEFAULT_THEME;
   }
 
-  const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
-  return normalizeTheme(stored);
+  return normalizeTheme(window.localStorage.getItem(THEME_STORAGE_KEY));
 }
 
 export function writeStoredTheme(theme) {
