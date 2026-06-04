@@ -39,6 +39,34 @@
   --shadow: var(--surface-shadow);
 }
 
+body.theme-classic {
+  --bg-primary: #ffffff;
+  --bg-secondary: #ffffff;
+  --card-bg: #ffffff;
+  --panel-bg: #f5f5f5;
+
+  --text-primary: #111827;
+  --text-muted: #374151;
+  --border: #e5e7eb;
+
+  --neon-primary: #16a34a;
+  --neon-secondary: #16a34a;
+
+  --glow-primary: 0 0 0 rgba(22, 163, 74, 0);
+  --glow-secondary: 0 0 0 rgba(22, 163, 74, 0);
+  --surface-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+
+  --bg: var(--bg-primary);
+  --panel: var(--card-bg);
+  --panel-strong: var(--panel-bg);
+  --ink: var(--text-primary);
+  --muted: var(--text-muted);
+  --accent: var(--neon-primary);
+  --accent-strong: #16a34a;
+  --accent-soft: rgba(22, 163, 74, 0.12);
+  --shadow: var(--surface-shadow);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -54,6 +82,10 @@ body {
     linear-gradient(155deg, #050816 0%, #0b1020 52%, #111827 100%);
 }
 
+body.theme-classic {
+  background: #ffffff;
+}
+
 body::before {
   content: '';
   position: fixed;
@@ -63,6 +95,26 @@ body::before {
     linear-gradient(90deg, rgba(148, 163, 184, 0.07) 1px, transparent 1px);
   background-size: 40px 40px;
   mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.45), transparent 88%);
+}
+
+body.theme-classic::before {
+  background-image: none;
+}
+
+body.theme-classic .navbar {
+  background: #16a34a;
+  border-bottom-color: #15803d;
+}
+
+body.theme-classic .subnav {
+  background: #f5f5f5;
+  backdrop-filter: none;
+}
+
+body.theme-classic .subnav-list a:hover,
+body.theme-classic .subnav-btn:hover {
+  text-shadow: none;
+  background: rgba(22, 163, 74, 0.08);
 }
 
 #root {
@@ -132,6 +184,22 @@ body::before {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+}
+
+.theme-toggle-btn {
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  padding: 0.45rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.theme-toggle-btn:hover {
+  border-color: var(--neon-primary);
+  box-shadow: var(--glow-primary);
 }
 
 .navbar-profile {
@@ -1528,6 +1596,23 @@ a.account-card:hover {
   color: var(--neon-primary);
   font-size: 0.8rem;
   font-weight: 600;
+}
+
+body.theme-classic .offers-panel {
+  background: #f5f5f5;
+}
+
+body.theme-classic .offer-slide {
+  background: #ffffff;
+}
+
+body.theme-classic .offer-dot {
+  border-color: rgba(22, 163, 74, 0.5);
+  background: rgba(22, 163, 74, 0.2);
+}
+
+body.theme-classic .offer-media img {
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
 }
 
 .big-get-started {

@@ -26,8 +26,10 @@ import { TransactionHistoryPage } from './pages/TransactionHistoryPage';
 import { TransferPage } from './pages/TransferPage';
 import { WithdrawPage } from './pages/WithdrawPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { useTheme } from './theme/ThemeContext';
 
 import voltioIcon from './images/Voltio_icon.png';
+import voltioIconGreen from './images/Voltio_icon_green.png';
 
 function getDefaultAuthenticatedRoute(authState) {
   const isAdmin = authState.roles.includes('ADMIN') || authState.roles.includes('ROLE_ADMIN');
@@ -91,6 +93,7 @@ function getActiveAccountIdFromPath(pathname) {
 
 function AppLayout() {
   const { authState, isAdmin, isAuthenticated } = useAuth();
+  const { isClassic, toggleTheme } = useTheme();
   const customerId = authState.customerId;
   const location = useLocation();
   const navigate = useNavigate();
@@ -190,9 +193,17 @@ function AppLayout() {
     <div className="app-shell">
       <header className="navbar">
         <NavLink className="navbar-brand navbar-brand-link" to="/">
-          <img src={voltioIcon} alt="Voltio" className="navbar-logo" />
+          <img src={isClassic ? voltioIconGreen : voltioIcon} alt="Voltio" className="navbar-logo" />
         </NavLink>
         <div className="navbar-actions">
+          <button
+            type="button"
+            className="theme-toggle-btn"
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+          >
+            {isClassic ? 'Theme: Classic' : 'Theme: New'}
+          </button>
           {isAuthenticated ? (
             <div className="navbar-profile" ref={dropdownRef}>
               <button
