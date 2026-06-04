@@ -1,6 +1,6 @@
 <!--
 Sync Impact Report
-- Version change: template-placeholder -> 1.0.0
+- Version change: 1.0.0 -> 1.1.0
 - Modified principles:
 	- template principle slot 1 -> I. Contract Before Code
 	- template principle slot 2 -> II. Single Source of Truth for Error Semantics
@@ -10,6 +10,7 @@ Sync Impact Report
 	- (new) VI. Testability Is a Merge Gate
 	- (new) VII. No Silent Degradation
 	- (new) VIII. Style and Structure Discipline
+	- (new) IX. Theme Parity Requirement
 - Added sections:
 	- Operational Constraints
 	- Enforcement Rule Set (Practical Checklist)
@@ -80,6 +81,12 @@ domain behavior in services/hooks, and presentation in pages/components.
 Cross-layer coupling is prohibited, including page components constructing raw
 backend URLs or bypassing shared clients.
 
+### IX. Theme Parity Requirement
+Voltio supports two official UI themes: Classic and Neon. Any new user-facing
+feature, component, page, modal, form, notification, visual state, or UI bug fix
+MUST be implemented, tested, and reviewed in both themes before merge.
+Theme support is a core product requirement, not an enhancement.
+
 ## Operational Constraints
 
 - No TODO placeholders are permitted in security, auth, or money movement logic.
@@ -87,6 +94,8 @@ backend URLs or bypassing shared clients.
 	frontend mapping layer; copy-pasted error text across layers is prohibited.
 - All environment-specific URLs MUST come from environment variables.
 - CORS origin additions MUST include explicit reason and environment scope.
+- User-facing UI changes MUST preserve consistency, accessibility, and usability
+	across Classic and Neon themes.
 
 ## Enforcement Rule Set (Practical Checklist)
 
@@ -105,6 +114,10 @@ Frontend Rules:
 	that client.
 - Direct `fetch`/`axios` in pages is prohibited.
 - User-facing errors MUST use mapped structured errors.
+- New theme-dependent variables, colors, icons, animations, or assets MUST be
+	implemented for both Classic and Neon themes.
+- No user-facing UI change is complete if it functions or renders correctly in
+	only one theme.
 
 Config Rules:
 - Hardcoded infrastructure hostnames in committed dev config are prohibited unless
@@ -117,11 +130,22 @@ Testing Rules:
 	validation test, and one business-failure test.
 - Frontend API behavior changes require at least one test update in existing
 	frontend suites.
+- UI behavior or styling changes require verification in both Classic and Neon
+	themes, including bug fixes that affect user-visible behavior.
+- Screenshots, demos, or QA validation for new UI features SHOULD include both
+	theme variants when applicable.
+
+UI Merge Gate Rules:
+- Any PR introducing or modifying user-facing UI MUST explicitly confirm:
+	Classic theme tested, Neon theme tested, and no visual regressions in either
+	theme.
 
 Release Rules:
 - Before release: frontend tests pass; backend tests compile and pass; local smoke
 	check for login, account list, and transfer path passes; and no 5xx/502 appears
 	in browser network for core flows.
+- Before release: run smoke checks for core user-facing flows in both Classic and
+	Neon themes.
 
 ## Governance
 This constitution supersedes conflicting local conventions for implementation and
@@ -143,4 +167,4 @@ Compliance review expectations:
 - Violations MUST be explicitly justified in writing with an approved exception.
 - Exceptions are time-bound and MUST include follow-up remediation tasks.
 
-**Version**: 1.0.0 | **Ratified**: 2026-06-04 | **Last Amended**: 2026-06-04
+**Version**: 1.1.0 | **Ratified**: 2026-06-04 | **Last Amended**: 2026-06-04
