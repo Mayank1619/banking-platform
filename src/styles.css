@@ -49,11 +49,11 @@ body.theme-classic {
   --text-muted: #374151;
   --border: #e5e7eb;
 
-  --neon-primary: #16a34a;
-  --neon-secondary: #16a34a;
+  --neon-primary: #15803d;
+  --neon-secondary: #15803d;
 
-  --glow-primary: 0 0 0 rgba(22, 163, 74, 0);
-  --glow-secondary: 0 0 0 rgba(22, 163, 74, 0);
+  --glow-primary: 0 0 0 rgba(21, 128, 61, 0);
+  --glow-secondary: 0 0 0 rgba(21, 128, 61, 0);
   --surface-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
 
   --bg: var(--bg-primary);
@@ -62,8 +62,8 @@ body.theme-classic {
   --ink: var(--text-primary);
   --muted: var(--text-muted);
   --accent: var(--neon-primary);
-  --accent-strong: #16a34a;
-  --accent-soft: rgba(22, 163, 74, 0.12);
+  --accent-strong: #15803d;
+  --accent-soft: rgba(21, 128, 61, 0.12);
   --shadow: var(--surface-shadow);
 }
 
@@ -102,8 +102,8 @@ body.theme-classic::before {
 }
 
 body.theme-classic .navbar {
-  background: #16a34a;
-  border-bottom-color: #15803d;
+  background: #15803d;
+  border-bottom-color: #166534;
 }
 
 body.theme-classic .subnav {
@@ -114,7 +114,7 @@ body.theme-classic .subnav {
 body.theme-classic .subnav-list a:hover,
 body.theme-classic .subnav-btn:hover {
   text-shadow: none;
-  background: rgba(22, 163, 74, 0.08);
+  background: rgba(21, 128, 61, 0.08);
 }
 
 #root {
@@ -1607,8 +1607,8 @@ body.theme-classic .offer-slide {
 }
 
 body.theme-classic .offer-dot {
-  border-color: rgba(22, 163, 74, 0.5);
-  background: rgba(22, 163, 74, 0.2);
+  border-color: rgba(21, 128, 61, 0.5);
+  background: rgba(21, 128, 61, 0.2);
 }
 
 body.theme-classic .offer-media img {
