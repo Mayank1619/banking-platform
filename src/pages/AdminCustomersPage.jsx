@@ -9,7 +9,7 @@ import { accountApiClient } from '../api/axiosClient';
 
 export default function AdminCustomersPage() {
   function Spinner() {
-    return <div className="banner success" style={{ margin: '2em auto', textAlign: 'center' }}>Loading…</div>;
+    return <div className="banner success centered-banner">Loading…</div>;
   }
 
   const { isAdmin, rememberCustomerId } = useAuth();
@@ -43,19 +43,19 @@ export default function AdminCustomersPage() {
       <section className="panel stack">
         <div>
           <h2>Customers</h2>
-          <p className="muted" style={{ margin: '0.25rem 0 1.25rem 0' }}>All customers in the system.</p>
+          <p className="muted customers-subtitle">All customers in the system.</p>
         </div>
-        <div className="field" style={{ maxWidth: 350 }}>
+        <div className="field customer-search-field">
           <input
             type="text"
             className="input"
             placeholder="Search by name or ID..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            style={{ marginBottom: 0, padding: 8, width: '100%', borderRadius: 6, border: '1px solid #ccc' }}
+            className="customer-search-input"
           />
         </div>
-        {error ? <div className="banner error" style={{ margin: '1em 0' }}>{error}</div> : null}
+        {error ? <div className="banner error customers-error-banner">{error}</div> : null}
         {loading ? <Spinner /> : null}
       </section>
       <section className="table-shell accounts-table-shell">

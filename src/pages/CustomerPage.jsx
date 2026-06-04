@@ -33,7 +33,7 @@ export function CustomerPage() {
         {message ? <div className="banner success">{message}</div> : null}
         {error ? <div className="banner error">{error.message}</div> : null}
         <div className="actions">
-          <div className="field" style={{ flex: 1 }}>
+          <div className="field grow-field">
             <label htmlFor="customer-delete-id">Customer ID</label>
             <input
               id="customer-delete-id"

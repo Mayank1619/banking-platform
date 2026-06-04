@@ -182,7 +182,7 @@ export function TransferPage() {
                 </option>
               ))}
             </select>
-            {sameAccountError ? <p className="field-hint" style={{ color: 'var(--danger)' }}>{sameAccountError}</p> : null}
+            {sameAccountError ? <p className="field-hint danger-text">{sameAccountError}</p> : null}
           </div>
           <div className="field">
             <label htmlFor="transfer-amount">Amount</label>
@@ -196,7 +196,7 @@ export function TransferPage() {
               onChange={(event) => setForm((current) => ({ ...current, amount: event.target.value }))}
               required
             />
-            {amountExceedsBalance ? <p className="field-hint" style={{ color: 'var(--danger)' }}>{amountExceedsBalance}</p> : null}
+            {amountExceedsBalance ? <p className="field-hint danger-text">{amountExceedsBalance}</p> : null}
             {fromBalance !== null ? <p className="field-hint">Available balance: ${fromBalance}</p> : null}
           </div>
           <div className="field full">
@@ -220,7 +220,7 @@ export function TransferPage() {
             <p className="field-hint">Optional. Category for this transaction.</p>
           </div>
         </form>
-        <div className="actions" style={{ justifyContent: 'center' }}>
+        <div className="actions centered-row">
           <button
             type="submit"
             form="transfer-form"

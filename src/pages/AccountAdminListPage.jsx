@@ -35,11 +35,11 @@ export function AccountAdminListPage() {
       <section className="panel stack">
         <div>
           <h2>All Accounts</h2>
-          <p className="muted" style={{ margin: '0.25rem 0 0' }}>Every account across all customers.</p>
+          <p className="muted text-top-muted">Every account across all customers.</p>
         </div>
 
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          <div className="field" style={{ flex: '1 1 240px', maxWidth: 360 }}>
+        <div className="admin-filters-row">
+          <div className="field admin-search-field">
             <label htmlFor="admin-accounts-search">Search</label>
             <input
               id="admin-accounts-search"
@@ -49,7 +49,7 @@ export function AccountAdminListPage() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <div className="field" style={{ flex: '0 0 180px' }}>
+          <div className="field admin-type-field">
             <label htmlFor="admin-accounts-type">Account Type</label>
             <select
               id="admin-accounts-type"
@@ -94,7 +94,7 @@ export function AccountAdminListPage() {
                   <td>
                     <Link
                       to={`/accounts/${account.accountId}`}
-                      style={{ fontWeight: 700, color: 'var(--accent)', textDecoration: 'none' }}
+                      className="table-link-strong"
                     >
                       #{account.accountId}
                     </Link>
@@ -102,7 +102,7 @@ export function AccountAdminListPage() {
                   <td>
                     <Link
                       to={`/customer/${account.customerId}/accounts`}
-                      style={{ fontWeight: 700, color: 'var(--accent)', textDecoration: 'none' }}
+                      className="table-link-strong"
                     >
                       {account.customerId}
                     </Link>

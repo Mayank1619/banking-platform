@@ -128,7 +128,7 @@ export function AccountListPage() {
   return (
     <>
       {/* Banner messages at the very top, outside main content */}
-      <div className="banner-stack" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
+      <div className="banner-stack">
         {deletedAccountMessage ? <div className="banner success">{deletedAccountMessage}</div> : null}
         {flashMessage ? <div className="banner info">{flashMessage}</div> : null}
         {actionMessage ? <div className="banner success">{actionMessage}</div> : null}
@@ -139,10 +139,10 @@ export function AccountListPage() {
       </div>
       <div className="stack">
         <section className="panel stack">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div className="page-header-row">
             <div>
               <h2>My Accounts</h2>
-              <p className="muted" style={{ margin: '0.25rem 0 0' }}>View and manage your accounts.</p>
+              <p className="muted text-top-muted">View and manage your accounts.</p>
             </div>
             {!accountsError && !customerError ? (
               <button type="button" onClick={openCreateModal}>Create Account</button>
@@ -175,7 +175,7 @@ export function AccountListPage() {
                     <div className="account-card-header">
                       <span className="account-card-type">
                         {account.accountType}
-                        {account.accountType === 'TFSA' ? <span className="badge" style={{ marginLeft: '0.4rem' }}>Tax-Free</span> : null}
+                        {account.accountType === 'TFSA' ? <span className="badge badge-inline-offset">Tax-Free</span> : null}
                       </span>
                       <span className="account-card-id">{account.accountId}</span>
                     </div>

@@ -189,8 +189,8 @@ function AppLayout() {
   return (
     <div className="app-shell">
       <header className="navbar">
-        <NavLink className="navbar-brand" to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-          <img src={voltioIcon} alt="Voltio" style={{ height: '48px', display: 'block' }} />
+        <NavLink className="navbar-brand navbar-brand-link" to="/">
+          <img src={voltioIcon} alt="Voltio" className="navbar-logo" />
         </NavLink>
         <div className="navbar-actions">
           {isAuthenticated ? (
@@ -310,7 +310,7 @@ function AppLayout() {
             <div className="section-header">
               <div>
                 <h3 id="account-picker-title">Select an Account</h3>
-                <p className="muted" style={{ margin: '0.25rem 0 0' }}>
+                <p className="muted text-top-muted">
                   Choose which account to view {pendingFeature && pendingFeature.replace('-', ' ')}.
                 </p>
               </div>
