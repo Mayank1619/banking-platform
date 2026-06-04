@@ -170,8 +170,8 @@ export function AccountDetailPage() {
         <section className="panel stack">
           <div className="section-header">
             <div>
-              <h2 style={{ margin: 0, fontSize: '1.75rem' }}>Account Overview</h2>
-              <p className="muted" style={{ margin: '0.25rem 0 0 0' }}>View your account balance and access account features.</p>
+              <h2 className="title-large">Account Overview</h2>
+              <p className="muted text-block-tight-top">View your account balance and access account features.</p>
             </div>
             <div className="actions">
               <Link className="button-link subtle" to={`/customer/${account.customerId}/accounts`}>Back to Account List</Link>
@@ -182,14 +182,14 @@ export function AccountDetailPage() {
               )}
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '3rem', padding: '2.25rem 3rem', background: 'var(--color-surface, #f8f9fa)', borderRadius: '12px', border: '1px solid var(--color-border, #e2e6ea)', margin: '0.5rem 0 1.5rem 0', width: '100%', boxSizing: 'border-box', boxShadow: '0 2px 16px 0 rgba(0,0,0,0.04)' }}>
-            <div style={{ flex: 1, textAlign: 'center' }}>
-              <p className="muted" style={{ margin: '0 0 0.4rem 0', fontSize: '1rem', textAlign: 'center' }}>Account Type</p>
-              <p style={{ margin: 0, fontSize: '2.5rem', fontWeight: 700, lineHeight: 1, textAlign: 'center' }}>{account.accountType}</p>
+          <div className="account-overview-grid">
+            <div className="account-overview-col">
+              <p className="muted account-overview-label">Account Type</p>
+              <p className="account-overview-value">{account.accountType}</p>
             </div>
-            <div style={{ flex: 1, borderLeft: '1px solid var(--color-border, #e2e6ea)', paddingLeft: '3rem', textAlign: 'center' }}>
-              <p className="muted" style={{ margin: '0 0 0.4rem 0', fontSize: '1rem', textAlign: 'center' }}>Balance</p>
-              <p style={{ margin: 0, fontSize: '2.5rem', fontWeight: 700, lineHeight: 1, textAlign: 'center' }}>{account.balance}</p>
+            <div className="account-overview-col split">
+              <p className="muted account-overview-label">Balance</p>
+              <p className="account-overview-value">{account.balance}</p>
             </div>
           </div>
           <div className="section-divider" />
@@ -206,11 +206,11 @@ export function AccountDetailPage() {
       ) : null}
 
       {isRrsp ? (
-        <section className="panel stack" style={{ background: 'var(--color-surface-alt, #f0f4f8)' }}>
+        <section className="panel stack panel-alt">
           <div className="section-header">
             <div>
-              <h3 style={{ margin: 0 }}>GIC Portfolio</h3>
-              <p className="muted" style={{ margin: '0.25rem 0 0 0' }}>Guaranteed Investment Certificates linked to this RRSP.</p>
+              <h3 className="zero-margin">GIC Portfolio</h3>
+              <p className="muted text-block-tight-top">Guaranteed Investment Certificates linked to this RRSP.</p>
             </div>
             <button type="button" onClick={() => { setGicError(null); setGicMessage(null); setIsGicModalOpen(true); }}>
               Open GIC from this Account
@@ -260,7 +260,7 @@ export function AccountDetailPage() {
             </section>
           ) : !gicQuery.isLoading ? (
             <div className="panel gic-empty-panel">
-              <p className="muted" style={{ margin: 0 }}>No active GIC investments for this RRSP.</p>
+              <p className="muted zero-margin">No active GIC investments for this RRSP.</p>
               <button type="button" onClick={() => { setGicError(null); setGicMessage(null); setIsGicModalOpen(true); }}>Open your first GIC</button>
             </div>
           ) : null}
@@ -272,8 +272,8 @@ export function AccountDetailPage() {
         <section className="panel stack danger-zone">
           <div className="section-header">
             <div>
-              <h3 style={{ margin: 0 }}>Admin Management</h3>
-              <p className="muted" style={{ margin: '0.25rem 0 0 0' }}>Administrative actions for this account.</p>
+              <h3 className="zero-margin">Admin Management</h3>
+              <p className="muted text-block-tight-top">Administrative actions for this account.</p>
             </div>
           </div>
           {actionMessage ? <div className="banner success">{actionMessage}</div> : null}

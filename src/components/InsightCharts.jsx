@@ -1,14 +1,14 @@
 const CATEGORY_COLORS = {
-  'Housing': '#005f73',
-  'Transport': '#9b2226',
-  'Food & Drink': '#0a9396',
-  'Entertainment': '#ca6702',
-  'Shopping': '#3a86ff',
-  'Utilities': '#ff006e',
-  'Health': '#6d597a',
-  'Income': '#2b9348',
-  'Other': '#ee9b00',
-  'No category': '#111827'
+  'Housing': '#00e5ff',
+  'Transport': '#ff4d6d',
+  'Food & Drink': '#4dfccf',
+  'Entertainment': '#a855f7',
+  'Shopping': '#52a8ff',
+  'Utilities': '#ff7ab6',
+  'Health': '#b78cff',
+  'Income': '#39ff88',
+  'Other': '#ffd166',
+  'No category': '#475569'
 };
 
 function toAmount(value) {
@@ -130,7 +130,7 @@ export function SpendingPieChart({ categories, showTitle = true, className = '' 
     const start = runningTotal;
     runningTotal = Math.min(100, runningTotal + percentage);
     const end = index === visibleCategories.length - 1 ? 100 : runningTotal;
-    const color = CATEGORY_COLORS[category.category] || '#475569';
+    const color = CATEGORY_COLORS[category.category] || '#94a3b8';
 
     if (end > start) {
       segments.push(`${color} ${start}% ${end}%`);
@@ -138,7 +138,7 @@ export function SpendingPieChart({ categories, showTitle = true, className = '' 
   });
 
   const chartStyle = isEmpty
-    ? { background: 'conic-gradient(#d8d1c7 0 100%)' }
+    ? { background: 'conic-gradient(#334155 0 100%)' }
     : { background: `conic-gradient(${segments.join(', ')})` };
 
   return (
@@ -152,7 +152,7 @@ export function SpendingPieChart({ categories, showTitle = true, className = '' 
           <div className="pie-legend">
             {visibleCategories.map((category, index) => (
               <div className="legend-row" key={`${category.category}-${index}`}>
-                <span className="legend-swatch" style={{ backgroundColor: CATEGORY_COLORS[category.category] || '#475569' }} />
+                <span className="legend-swatch" style={{ backgroundColor: CATEGORY_COLORS[category.category] || '#94a3b8' }} />
                 <div>
                   <strong>{category.category}</strong>
                   <p className="muted compact-text">{category.totalAmount} ({category.percentage}%)</p>
