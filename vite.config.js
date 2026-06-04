@@ -9,8 +9,8 @@ const testSetupFile = fileURLToPath(
 export default defineConfig(({ mode }) => {
   loadEnv(mode, process.cwd(), "");
   const backendTarget =
-    "http://banking-platform-backend.dev-banking-backend.svc.cluster.local:8080/";
-  // const backendTarget = 'http://localhost:8080';
+    process.env.VITE_DEV_BACKEND_TARGET ||
+    "http://localhost:8080/";
   return {
     plugins: [react()],
     test: {
