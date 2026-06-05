@@ -1962,3 +1962,576 @@ summary:focus-visible {
     text-align: center;
   }
 }
+/* ═══════════════════════════════════════════════════════════════
+   SAVINGS GOAL TRACKER — Shared + Neon (default) Theme
+   T071-T075: Theme support for GoalProgressBar, SavingsGoalCard,
+   GoalCreationFlow, GoalEditForm, GoalDeleteConfirmation
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Goal List (AccountListPage integration) ─────────────────── */
+
+.goal-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.goal-list-item {
+  width: 100%;
+}
+
+/* ── Goal Empty State Card ────────────────────────────────────── */
+
+.goal-empty-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border: 1px dashed var(--border);
+  border-radius: 16px;
+  background: transparent;
+  gap: 1rem;
+}
+
+.goal-empty-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.goal-empty-account {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.goal-empty-label {
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+/* ── SavingsGoalCard ──────────────────────────────────────────── */
+
+.goal-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.25rem 1.4rem;
+  display: grid;
+  gap: 1rem;
+  box-shadow: 0 8px 18px rgba(3, 10, 24, 0.25);
+  transition: border-color var(--transition-ui), box-shadow var(--transition-ui);
+}
+
+.goal-card:hover {
+  border-color: var(--accent);
+  box-shadow: var(--glow-primary);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.goal-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+}
+
+.account-number {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.card-body {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.goal-details {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+}
+
+.detail-label {
+  color: var(--muted);
+}
+
+.detail-value {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.card-footer {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+/* Inline delete confirmation in card */
+.delete-confirmation-inline {
+  padding: 0.75rem;
+  border: 1px solid rgba(255, 77, 109, 0.35);
+  border-radius: 12px;
+  background: rgba(255, 77, 109, 0.08);
+}
+
+.delete-confirmation-inline p {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+
+.confirmation-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* ── Status Badges ────────────────────────────────────────────── */
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.status-not-started {
+  background: rgba(71, 85, 105, 0.28);
+  color: var(--text-muted);
+}
+
+.status-in-progress {
+  background: rgba(0, 229, 255, 0.13);
+  color: var(--neon-primary);
+}
+
+.status-achieved {
+  background: rgba(57, 255, 136, 0.16);
+  color: #b7ffd8;
+}
+
+.status-overdue {
+  background: rgba(255, 77, 109, 0.16);
+  color: #ffd3dc;
+}
+
+/* ── GoalProgressBar ──────────────────────────────────────────── */
+
+.goal-progress-container {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.progress-label {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.progress-percentage {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.progress-bar-wrapper {
+  width: 100%;
+}
+
+.progress-bar-track {
+  width: 100%;
+  height: 8px;
+  background: var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.progress-details {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+}
+
+.balance-info {
+  color: var(--muted);
+}
+
+.balance-amount {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.target-info {
+  color: var(--muted);
+}
+
+/* ── GoalCreationFlow ─────────────────────────────────────────── */
+
+.goal-creation-flow {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.flow-header {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.flow-header h2 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.flow-header .account-info {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.step-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+}
+
+.step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-weight: 700;
+  border: 2px solid var(--border);
+  color: var(--muted);
+  background: transparent;
+  transition: background var(--transition-ui), border-color var(--transition-ui), color var(--transition-ui);
+}
+
+.step.active {
+  background: var(--neon-primary);
+  border-color: var(--neon-primary);
+  color: var(--bg-primary);
+  box-shadow: var(--glow-primary);
+}
+
+.step-line {
+  flex: 1;
+  height: 2px;
+  background: var(--border);
+  border-radius: 1px;
+}
+
+.flow-content {
+  min-height: 120px;
+}
+
+.step-content {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.step-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.step-select,
+.amount-input,
+.date-input,
+.custom-input {
+  border-color: var(--border);
+}
+
+.step-select.error,
+.amount-input.error,
+.date-input.error {
+  border-color: var(--error);
+}
+
+.amount-input-group {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--card-bg);
+}
+
+.amount-input-group .currency {
+  display: flex;
+  align-items: center;
+  padding: 0 0.75rem;
+  color: var(--muted);
+  font-weight: 600;
+  background: var(--panel-bg);
+  border-right: 1px solid var(--border);
+}
+
+.amount-input-group input {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.amount-input-group:focus-within {
+  border-color: var(--neon-primary);
+  box-shadow: var(--focus-ring);
+}
+
+.error-message {
+  color: var(--error);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+/* Review step */
+.review-content {
+  background: var(--panel-bg);
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+
+.review-content h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 0.75rem;
+}
+
+.review-items {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.review-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.92rem;
+}
+
+.review-label {
+  color: var(--muted);
+}
+
+.review-value {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.review-note {
+  margin: 0.75rem 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.flow-footer {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+/* ── GoalEditForm ─────────────────────────────────────────────── */
+
+.goal-edit-form {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.form-header {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.form-header h2 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+}
+
+.form-header .goal-info {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.form-body {
+  display: grid;
+  gap: 1rem;
+}
+
+.form-group {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.form-label {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.form-input.error {
+  border-color: var(--error);
+}
+
+.form-footer {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+/* ── GoalDeleteConfirmation Modal ─────────────────────────────── */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(3, 10, 24, 0.7);
+}
+
+.modal-content {
+  width: min(460px, 100%);
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.4rem;
+  box-shadow: var(--surface-shadow), var(--glow-secondary);
+  backdrop-filter: blur(16px);
+}
+
+.modal-header {
+  margin-bottom: 1rem;
+}
+
+.modal-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+}
+
+.modal-body {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.confirmation-text,
+.warning-text {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.warning-text {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.goal-summary {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+}
+
+.summary-label {
+  color: var(--muted);
+}
+
+.summary-value {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.modal-footer {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1.25rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SAVINGS GOAL TRACKER — Classic Theme Overrides (T072-T075)
+   ═══════════════════════════════════════════════════════════════ */
+
+body.theme-classic .goal-card:hover {
+  box-shadow: 0 8px 18px rgba(21, 128, 61, 0.18);
+  border-color: #15803d;
+}
+
+body.theme-classic .step.active {
+  background: #15803d;
+  border-color: #15803d;
+  color: #ffffff;
+  box-shadow: none;
+}
+
+body.theme-classic .status-in-progress {
+  background: rgba(21, 128, 61, 0.12);
+  color: #15803d;
+}
+
+body.theme-classic .status-achieved {
+  background: rgba(22, 101, 52, 0.14);
+  color: #166534;
+}
+
+body.theme-classic .status-overdue {
+  background: rgba(185, 28, 28, 0.12);
+  color: #b91c1c;
+}
+
+body.theme-classic .amount-input-group:focus-within {
+  border-color: #15803d;
+  box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.15);
+}

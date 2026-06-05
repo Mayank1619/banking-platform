@@ -8,7 +8,7 @@
 
 **Input**: User description: "Savings Goal Tracker - lives within Accounts section, allows customers to set and monitor one savings goal per account with progress tracking, edit/delete capabilities, and backend persistence."
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Create First Savings Goal (Priority: P1)
 
@@ -99,7 +99,7 @@ The goal tracker displays a progress bar and time remaining so the customer can 
 - What if a customer tries to set a target amount of $0 or negative? (Validation should reject and show error message.)
 - What if a customer sets the target date to today or in the past? (Validation should reject or require confirmation, depending on UX decision.)
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -116,7 +116,7 @@ The goal tracker displays a progress bar and time remaining so the customer can 
 - **FR-011**: System MUST NOT execute any money movement. The tracker records and displays intent only; no funds are transferred or locked as a result of goal operations.
 - **FR-012**: System MUST return all goal fields (including question-answer pairs) when opening the edit form so the UI can pre-populate previous answers.
 
-### Contract & Error Semantics Requirements *(mandatory for API or integration changes)*
+### Contract & Error Semantics Requirements _(mandatory for API or integration changes)_
 
 - **CER-001**: A new backend endpoint or DTO for goal creation MUST define stable request/response contracts. Request contract: `{accountId, goalName, targetAmount, targetDate}`. Response contract MUST include goal ID, created timestamp, and all input fields.
 - **CER-002**: Endpoints for goal retrieval, update, and deletion MUST define stable contracts and be tested for compatibility with frontend consumers before merge.
@@ -124,20 +124,20 @@ The goal tracker displays a progress bar and time remaining so the customer can 
 - **CER-004**: Frontend MUST map backend error codes in `src/api/axiosClient.js` only. Ad-hoc error parsing in pages or components is prohibited.
 - **CER-005**: Goal update operations MUST be idempotent and handle concurrent edits safely (e.g., via optimistic locking or version fields if needed).
 
-### Security & Configuration Requirements *(mandatory for endpoint/proxy/auth changes)*
+### Security & Configuration Requirements _(mandatory for endpoint/proxy/auth changes)_
 
 - **SCR-001**: All goal endpoints MUST enforce customer authentication and authorization. A customer MUST NOT be able to view, edit, or delete goals belonging to another customer.
 - **SCR-002**: Account ownership MUST be verified before allowing goal creation, edit, or deletion on that account. A customer MUST NOT be able to create a goal for an account they do not own.
 - **SCR-003**: Goal endpoints MUST be protected by JWT token validation in `SecurityConfig` and role-based access control if applicable.
 - **SCR-004**: CORS configuration MUST remain consistent with existing Voltio settings; no wildcard origins for production.
 
-### Key Entities *(include if feature involves data)*
+### Key Entities _(include if feature involves data)_
 
-- **SavingsGoal**: Represents a customer's savings goal for an account. Attributes: goalId (unique identifier), accountId (foreign key to account), customerId (to enforce authorization), goalName/type (text), targetAmount (decimal, > 0), targetDate (future date or today), createdDate (timestamp), lastUpdatedDate (timestamp), currentSavedAmount (decimal, >= 0), progressPercentage (calculated field, currentSavedAmount / targetAmount * 100).
+- **SavingsGoal**: Represents a customer's savings goal for an account. Attributes: goalId (unique identifier), accountId (foreign key to account), customerId (to enforce authorization), goalName/type (text), targetAmount (decimal, > 0), targetDate (future date or today), createdDate (timestamp), lastUpdatedDate (timestamp), currentSavedAmount (decimal, >= 0), progressPercentage (calculated field, currentSavedAmount / targetAmount \* 100).
 - **Account**: Existing entity linked to customer; each account can have zero or one SavingsGoal.
 - **Customer**: Existing entity; owns one or more accounts and their associated goals.
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 
