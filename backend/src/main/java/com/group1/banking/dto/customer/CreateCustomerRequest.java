@@ -6,11 +6,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Getter;
-import lombok.Setter;
-
-@Getter
-@Setter
 public class CreateCustomerRequest {
 
     @NotBlank(message = "name is required")
@@ -29,4 +24,15 @@ public class CreateCustomerRequest {
 
     @JsonProperty
     private boolean kycVerified;
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
+    public CustomerType getType() { return type; }
+    public void setType(CustomerType type) { this.type = type; }
+    public java.time.LocalDate getDateOfBirth() { return dateOfBirth; }
+    public void setDateOfBirth(java.time.LocalDate dateOfBirth) { this.dateOfBirth = dateOfBirth; }
+    public boolean isKycVerified() { return kycVerified; }
+    public void setKycVerified(boolean kycVerified) { this.kycVerified = kycVerified; }
 }

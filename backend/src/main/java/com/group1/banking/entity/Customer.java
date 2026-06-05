@@ -17,15 +17,10 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.Setter;
-
 import com.group1.banking.enums.CustomerType;
 
 @Entity
 @Table(name = "customers")
-@Getter
-@Setter
 public class Customer {
 
     @Id
@@ -72,18 +67,41 @@ public class Customer {
         updatedAt = Instant.now();
     }
 
+    public Long getCustomerId() {
+        return customerId;
+    }
+    public void setCustomerId(Long customerId) { this.customerId = customerId; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
+
+    public CustomerType getType() { return type; }
+    public void setType(CustomerType type) { this.type = type; }
+
     public java.time.LocalDate getDateOfBirth() {
         return dateOfBirth;
     }
+    public void setDateOfBirth(java.time.LocalDate dateOfBirth) { this.dateOfBirth = dateOfBirth; }
 
     public boolean isKycVerified() {
         return kycVerified;
     }
-    public Long getCustomerId() {
-        return customerId;
-    }
+    public void setKycVerified(boolean kycVerified) { this.kycVerified = kycVerified; }
 
     public List<Account> getAccounts() {
         return accounts;
     }
+    public void setAccounts(List<Account> accounts) { this.accounts = accounts; }
+
+    public Instant getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(Instant deletedAt) { this.deletedAt = deletedAt; }
+
+    public Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+    public Instant getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
 }
