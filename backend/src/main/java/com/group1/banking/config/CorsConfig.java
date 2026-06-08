@@ -41,9 +41,8 @@ public class CorsConfig {
 
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOrigins(List.of(
-                "http://localhost:5173",
-                "http://localhost:3000",
+        config.setAllowedOriginPatterns(List.of(
+                "http://localhost:*",
                 "https://frontend-524103119199.northamerica-northeast2.run.app",
                 "https://digital-banking-service-524103119199.northamerica-northeast1.run.app",
                 "http://34.72.76.94"
