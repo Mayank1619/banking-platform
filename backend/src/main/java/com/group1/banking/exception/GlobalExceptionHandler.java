@@ -106,6 +106,15 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("FORBIDDEN", "Access denied.", null));
     }
 
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException ex) {
+        ApiException apiEx = ex;
+        logger.warn("Business exception. code={}, message={}, status={}", 
+                   apiEx.getCode(), apiEx.getMessage(), apiEx.getStatus());
+        return ResponseEntity.status(apiEx.getStatus())
+                .body(new ErrorResponse(apiEx.getCode(), apiEx.getMessage(), apiEx.getDetails()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneric(Exception ex) {
         logger.error("Unexpected error occurred", ex);

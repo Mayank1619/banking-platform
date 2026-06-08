@@ -1,8 +1,5 @@
 package com.group1.banking.exception;
 
-import lombok.Getter;
-
-@Getter
 public class ApiException extends RuntimeException {
     private final int status;
     private final String code;
@@ -14,4 +11,8 @@ public class ApiException extends RuntimeException {
         this.code = code;
         this.details = details;
     }
+
+    public int getStatus() { return status; }
+    public String getCode() { return code; }
+    public Object getDetails() { return details; }
 }
