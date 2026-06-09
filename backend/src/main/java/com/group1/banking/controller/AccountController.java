@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,6 +17,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.group1.banking.dto.accountcontrol.AccountControlActionResponse;
+import com.group1.banking.dto.accountcontrol.AccountControlHistoryResponse;
+import com.group1.banking.dto.accountcontrol.FreezeAccountRequest;
+import com.group1.banking.dto.accountcontrol.UnfreezeAccountRequest;
 import com.group1.banking.dto.customer.AccountResponse;
 import com.group1.banking.dto.customer.CreateAccountRequest;
 import com.group1.banking.dto.customer.MonetaryRequest;
@@ -47,6 +52,12 @@ public class AccountController {
         return accountService.createAccount(customerId, request);
     }
 
+    @GetMapping("/accounts")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<AccountResponse> listAllAccounts() {
+        return accountService.listAllAccounts();
+    }
+
     @GetMapping("/accounts/{accountId}")
     public AccountResponse getAccount(@PathVariable Long accountId) {
         return accountService.getAccount(accountId);
@@ -73,6 +84,28 @@ public class AccountController {
     @PostMapping("/accounts/{accountId}/close")
     public Map<String, Object> closeRrspAccount(@PathVariable Long accountId) {
         return accountService.closeRrspAccount(accountId);
+    }
+
+    @PostMapping("/accounts/{accountId}/freeze")
+    @PreAuthorize("hasRole('ADMIN')")
+    public AccountControlActionResponse freezeAccount(
+            @PathVariable Long accountId,
+            @Valid @RequestBody FreezeAccountRequest request) {
+        return accountService.freezeAccount(accountId, request);
+    }
+
+    @PostMapping("/accounts/{accountId}/unfreeze")
+    @PreAuthorize("hasRole('ADMIN')")
+    public AccountControlActionResponse unfreezeAccount(
+            @PathVariable Long accountId,
+            @RequestBody(required = false) UnfreezeAccountRequest request) {
+        return accountService.unfreezeAccount(accountId, request);
+    }
+
+    @GetMapping("/accounts/{accountId}/control-history")
+    @PreAuthorize("hasRole('ADMIN')")
+    public AccountControlHistoryResponse controlHistory(@PathVariable Long accountId) {
+        return accountService.getControlHistory(accountId);
     }
 
     @PostMapping("/accounts/{accountId}/deposit")

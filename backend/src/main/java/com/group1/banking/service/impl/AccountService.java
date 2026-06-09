@@ -17,12 +17,18 @@ import org.springframework.transaction.annotation.Transactional;
 import com.group1.banking.dto.customer.AccountResponse;
 import com.group1.banking.dto.customer.CreateAccountRequest;
 import com.group1.banking.dto.customer.UpdateAccountRequest;
+import com.group1.banking.dto.accountcontrol.AccountControlActionResponse;
+import com.group1.banking.dto.accountcontrol.AccountControlHistoryEventResponse;
+import com.group1.banking.dto.accountcontrol.AccountControlHistoryResponse;
+import com.group1.banking.dto.accountcontrol.FreezeAccountRequest;
+import com.group1.banking.dto.accountcontrol.UnfreezeAccountRequest;
 import com.group1.banking.entity.Account;
 import com.group1.banking.entity.AccountStatus;
 import com.group1.banking.entity.AccountType;
 import com.group1.banking.entity.Customer;
 import com.group1.banking.entity.User;
 import com.group1.banking.exception.ConflictException;
+import com.group1.banking.exception.ForbiddenException;
 import com.group1.banking.exception.NotFoundException;
 import com.group1.banking.exception.UnauthorisedException;
 import com.group1.banking.exception.UnprocessableException;
@@ -32,8 +38,10 @@ import com.group1.banking.repository.AccountRepository;
 import com.group1.banking.repository.CustomerRepository;
 import com.group1.banking.repository.GicRepository;
 import com.group1.banking.repository.UserRepository;
+import com.group1.banking.entity.accountcontrol.AccountControlActionType;
 import com.group1.banking.security.AuthenticatedUser;
 import com.group1.banking.security.CustomUserPrincipal;
+import com.group1.banking.service.AccountControlAuditService;
 import com.group1.banking.service.AuthService;
 
 @Service
@@ -46,18 +54,21 @@ public class AccountService {
     private final AuthService authorizationService;
     private final UserRepository userRepository;
     private final GicRepository gicRepository;
+    private final AccountControlAuditService accountControlAuditService;
 
     public AccountService(
             AccountRepository accountRepository,
             CustomerRepository customerRepository,
             AuthService authorizationService,
             UserRepository userRepository,
-            GicRepository gicRepository) {
+            GicRepository gicRepository,
+            AccountControlAuditService accountControlAuditService) {
         this.accountRepository = accountRepository;
         this.customerRepository = customerRepository;
         this.authorizationService = authorizationService;
         this.userRepository = userRepository;
         this.gicRepository = gicRepository;
+        this.accountControlAuditService = accountControlAuditService;
     }
 
     @Transactional
@@ -74,7 +85,7 @@ public class AccountService {
     @Transactional(readOnly = true)
     public AccountResponse getAccount(Long accountId) {
         User user = getAuthenticatedUser();
-        Account account = loadActiveAccount(accountId);
+        Account account = isAdmin(user) ? loadAccount(accountId) : loadActiveAccount(accountId);
         checkAuthorization(user, account.getCustomer().getCustomerId());
         return AccountResponse.from(account);
     }
@@ -86,10 +97,113 @@ public class AccountService {
             throw new NotFoundException("CUSTOMER_NOT_FOUND", "Customer not found", Map.of("customerId", customerId));
         }
         checkAuthorization(user, customerId);
-        return accountRepository.findAllByCustomerCustomerIdAndDeletedAtIsNullAndStatus(customerId, AccountStatus.ACTIVE)
+        List<Account> accounts = isAdmin(user)
+                ? accountRepository.findAllByCustomerCustomerIdAndDeletedAtIsNullAndStatusNot(customerId, AccountStatus.CLOSED)
+                : accountRepository.findAllByCustomerCustomerIdAndDeletedAtIsNullAndStatus(customerId, AccountStatus.ACTIVE);
+        return accounts.stream()
+                .map(AccountResponse::from)
+                .toList();
+    }
+
+    @Transactional
+    public AccountControlActionResponse freezeAccount(Long accountId, FreezeAccountRequest request) {
+        User user = getAuthenticatedUser();
+        assertAdmin(user);
+        if (request == null || request.reason() == null || request.reason().isBlank()) {
+            throw new BadRequestException("MISSING_FREEZE_REASON", "Freeze reason is required", Map.of("field", "reason"));
+        }
+
+        Account account = loadAccount(accountId);
+        if (account.getStatus() == AccountStatus.FROZEN) {
+            throw new ConflictException("ACCOUNT_ALREADY_FROZEN", "Account is already frozen", Map.of("accountId", accountId));
+        }
+        if (account.getStatus() == AccountStatus.CLOSED) {
+            throw new ConflictException("ACCOUNT_STATUS_NOT_SUPPORTED", "Closed account cannot be frozen", Map.of("accountId", accountId));
+        }
+
+        AccountStatus previousStatus = account.getStatus();
+        account.setStatus(AccountStatus.FROZEN);
+        accountRepository.save(account);
+
+        accountControlAuditService.logEvent(
+                account.getAccountId(),
+                user.getUserId().toString(),
+                primaryRole(user),
+                AccountControlActionType.FREEZE,
+                previousStatus,
+                AccountStatus.FROZEN,
+                request.reason(),
+                request.notes());
+
+        return new AccountControlActionResponse(
+                account.getAccountId(),
+                previousStatus,
+                AccountStatus.FROZEN,
+                AccountControlActionType.FREEZE,
+                Instant.now());
+    }
+
+    @Transactional
+    public AccountControlActionResponse unfreezeAccount(Long accountId, UnfreezeAccountRequest request) {
+        User user = getAuthenticatedUser();
+        assertAdmin(user);
+
+        Account account = loadAccount(accountId);
+        if (account.getStatus() == AccountStatus.ACTIVE) {
+            throw new ConflictException("ACCOUNT_ALREADY_ACTIVE", "Account is already active", Map.of("accountId", accountId));
+        }
+        if (account.getStatus() == AccountStatus.CLOSED) {
+            throw new ConflictException("ACCOUNT_STATUS_NOT_SUPPORTED", "Closed account cannot be unfrozen", Map.of("accountId", accountId));
+        }
+
+        String reason = (request != null && request.reason() != null && !request.reason().isBlank())
+                ? request.reason()
+                : "Unfreeze requested";
+        String notes = request != null ? request.notes() : null;
+
+        AccountStatus previousStatus = account.getStatus();
+        account.setStatus(AccountStatus.ACTIVE);
+        accountRepository.save(account);
+
+        accountControlAuditService.logEvent(
+                account.getAccountId(),
+                user.getUserId().toString(),
+                primaryRole(user),
+                AccountControlActionType.UNFREEZE,
+                previousStatus,
+                AccountStatus.ACTIVE,
+                reason,
+                notes);
+
+        return new AccountControlActionResponse(
+                account.getAccountId(),
+                previousStatus,
+                AccountStatus.ACTIVE,
+                AccountControlActionType.UNFREEZE,
+                Instant.now());
+    }
+
+    @Transactional(readOnly = true)
+    public List<AccountResponse> listAllAccounts() {
+        User user = getAuthenticatedUser();
+        assertAdmin(user);
+        return accountRepository.findAllByDeletedAtIsNull()
                 .stream()
                 .map(AccountResponse::from)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public AccountControlHistoryResponse getControlHistory(Long accountId) {
+        User user = getAuthenticatedUser();
+        assertAdmin(user);
+        loadAccount(accountId);
+
+        List<AccountControlHistoryEventResponse> events = accountControlAuditService.getHistory(accountId)
+                .stream()
+                .map(AccountControlHistoryEventResponse::from)
+                .toList();
+        return new AccountControlHistoryResponse(accountId, events);
     }
 
 
@@ -243,6 +357,11 @@ public class AccountService {
                 .orElseThrow(() -> new NotFoundException("ACCOUNT_NOT_FOUND", "Account not found", Map.of("accountId", accountId)));
     }
 
+    private Account loadAccount(Long accountId) {
+        return accountRepository.findByAccountIdAndDeletedAtIsNull(accountId)
+                .orElseThrow(() -> new NotFoundException("ACCOUNT_NOT_FOUND", "Account not found", Map.of("accountId", accountId)));
+    }
+
     private Customer loadCustomer(Long customerId) {
         return customerRepository.findByCustomerIdAndDeletedAtIsNull(customerId)
                 .orElseThrow(() -> new NotFoundException("CUSTOMER_NOT_FOUND", "Customer not found", Map.of("customerId", customerId)));
@@ -280,6 +399,16 @@ public class AccountService {
     private boolean isAdmin(User user) {
         return user.getRoles().stream()
                 .anyMatch(r -> r.name().equalsIgnoreCase("ADMIN") || r.name().equalsIgnoreCase("ROLE_ADMIN"));
+    }
+
+    private void assertAdmin(User user) {
+        if (!isAdmin(user)) {
+            throw new ForbiddenException("FORBIDDEN", "Only admin users can perform this action");
+        }
+    }
+
+    private String primaryRole(User user) {
+        return user.getRoles().stream().findFirst().map(Enum::name).orElse("UNKNOWN");
     }
 
     private void checkAuthorization(User user, Long customerId) {

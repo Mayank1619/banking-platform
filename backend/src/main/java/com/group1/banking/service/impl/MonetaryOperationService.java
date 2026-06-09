@@ -88,7 +88,7 @@ public class MonetaryOperationService {
 
 	    OperationResult result = validateAccountPath(accountId);
 	    if (result == null) {
-	        Account account = loadActiveAccount(accountId);
+	        Account account = loadAccountForOperations(accountId);
 	        if (account == null) {
 	            result = notFound("ACCOUNT_NOT_FOUND", "Account not found", null);
 	        } else {
@@ -161,7 +161,7 @@ public class MonetaryOperationService {
 
 	    OperationResult result = validateAccountPath(accountId);
 	    if (result == null) {
-	        Account account = loadActiveAccount(accountId);
+	        Account account = loadAccountForOperations(accountId);
 	        if (account == null) {
 	            result = notFound("ACCOUNT_NOT_FOUND", "Account not found", Map.of("accountId", String.valueOf(accountId)));
 	        } else {
@@ -174,11 +174,12 @@ public class MonetaryOperationService {
 	            if (!isAdmin && !user.getCustomerId().equals(account.getCustomer().getCustomerId())) {
 	                result = unauthorized("UNAUTHORIZED", "You can only withdraw from your own account", null);
 	            } else {
+	                result = ensureDebitAllowed(account);
 	                BigDecimal amount = validateAmount(request == null ? null : request.amount());
-	                if (amount == null) {
+	                if (result == null && amount == null) {
 	                    result = unprocessable("INVALID_AMOUNT",
 	                            "Amount must be greater than 0 with at most 2 decimal places", "amount");
-	                } else {
+	                } else if (result == null) {
 	                    result = validateDescription(request == null ? null : request.description());
 	                    if (result == null && account.getBalance().compareTo(amount) < 0) {
 	                        Transaction failedTransaction = createTransaction(
@@ -256,16 +257,21 @@ public class MonetaryOperationService {
 	    }
 
 	    // 4️⃣ Load accounts
-	    Account from = loadActiveAccount(request.fromAccountId());
+	    Account from = loadAccountForOperations(request.fromAccountId());
 	    if (from == null) {
 	        return persistAndReturn(storageKey, idempotencyKey, userId, TRANSFER,
 	                notFound("ACCOUNT_NOT_FOUND", "Source account not found", Map.of("accountId", String.valueOf(request.fromAccountId()))));
 	    }
 
-	    Account to = loadActiveAccount(request.toAccountId());
+	    Account to = loadAccountForOperations(request.toAccountId());
 	    if (to == null) {
 	        return persistAndReturn(storageKey, idempotencyKey, userId, TRANSFER,
 	                notFound("ACCOUNT_NOT_FOUND", "Destination account not found", null));
+	    }
+
+	    OperationResult debitGuard = ensureDebitAllowed(from);
+	    if (debitGuard != null) {
+	        return persistAndReturn(storageKey, idempotencyKey, userId, TRANSFER, debitGuard);
 	    }
 
 	    // 5️⃣ Authorization (admin OR owner)
@@ -372,6 +378,21 @@ public class MonetaryOperationService {
 	private Account loadActiveAccount(Long accountId) {
 		return accountRepository.findByAccountIdAndDeletedAtIsNull(accountId)
 				.filter(account -> account.getStatus() == AccountStatus.ACTIVE).orElse(null);
+	}
+
+	private Account loadAccountForOperations(Long accountId) {
+		return accountRepository.findByAccountIdAndDeletedAtIsNull(accountId)
+				.filter(account -> account.getStatus() != AccountStatus.CLOSED).orElse(null);
+	}
+
+	private OperationResult ensureDebitAllowed(Account account) {
+		if (account.getStatus() == AccountStatus.FROZEN) {
+			return conflict(
+					"ACCOUNT_TEMPORARILY_RESTRICTED",
+					"This account is temporarily restricted. Please contact support.",
+					null);
+		}
+		return null;
 	}
 
 	private OperationResult authorizeAccount(AuthenticatedUser user, Account account) {

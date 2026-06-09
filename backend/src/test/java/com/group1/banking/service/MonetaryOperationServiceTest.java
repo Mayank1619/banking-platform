@@ -280,6 +280,23 @@ class MonetaryOperationServiceTest {
         assertThat(result.status()).isEqualTo(HttpStatus.OK);
     }
 
+    @Test
+    void deposit_shouldSucceed_whenAccountIsFrozen() {
+        account.setStatus(AccountStatus.FROZEN);
+        setUpSecurityContextWith(customerUser);
+        when(idempotencyRecordRepository.findByStorageKey(anyString())).thenReturn(Optional.empty());
+        when(accountRepository.findByAccountIdAndDeletedAtIsNull(1001L)).thenReturn(Optional.of(account));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(customerUser));
+        when(accountRepository.save(any())).thenReturn(account);
+        when(transactionRepository.save(any())).thenReturn(new Transaction());
+        when(idempotencyRecordRepository.save(any())).thenReturn(new IdempotencyRecord());
+
+        MonetaryRequest request = new MonetaryRequest(new BigDecimal("25.00"), "Frozen deposit");
+        OperationResult result = monetaryOperationService.deposit(1001L, request, "deposit-frozen-key");
+
+        assertThat(result.status()).isEqualTo(HttpStatus.OK);
+    }
+
     // ===== WITHDRAW TESTS =====
 
     @Test
@@ -367,6 +384,21 @@ class MonetaryOperationServiceTest {
         OperationResult result = monetaryOperationService.withdraw(1001L, request, "w-key-5");
 
         assertThat(result.status()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+
+    @Test
+    void withdraw_shouldReturnConflict_whenAccountIsFrozen() {
+        account.setStatus(AccountStatus.FROZEN);
+        setUpSecurityContextWith(customerUser);
+        when(idempotencyRecordRepository.findByStorageKey(anyString())).thenReturn(Optional.empty());
+        when(accountRepository.findByAccountIdAndDeletedAtIsNull(1001L)).thenReturn(Optional.of(account));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(customerUser));
+        when(idempotencyRecordRepository.save(any())).thenReturn(new IdempotencyRecord());
+
+        MonetaryRequest request = new MonetaryRequest(new BigDecimal("10.00"), "Test");
+        OperationResult result = monetaryOperationService.withdraw(1001L, request, "w-key-frozen");
+
+        assertThat(result.status()).isEqualTo(HttpStatus.CONFLICT);
     }
 
     // ===== TRANSFER TESTS =====
@@ -470,6 +502,47 @@ class MonetaryOperationServiceTest {
         OperationResult result = monetaryOperationService.transfer(request, "t-key-6");
 
         assertThat(result.status()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    void transfer_shouldReturnConflict_whenSourceAccountIsFrozen() {
+        account.setStatus(AccountStatus.FROZEN);
+        setUpSecurityContextWith(customerUser);
+        when(idempotencyRecordRepository.findByStorageKey(anyString())).thenReturn(Optional.empty());
+        when(accountRepository.findByAccountIdAndDeletedAtIsNull(1001L)).thenReturn(Optional.of(account));
+        when(accountRepository.findByAccountIdAndDeletedAtIsNull(2002L)).thenReturn(Optional.of(toAccount));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(customerUser));
+        when(idempotencyRecordRepository.save(any())).thenReturn(new IdempotencyRecord());
+
+        TransferRequest request = new TransferRequest(1001L, 2002L, new BigDecimal("30.00"), "Test");
+        OperationResult result = monetaryOperationService.transfer(request, "t-frozen");
+
+        assertThat(result.status()).isEqualTo(HttpStatus.CONFLICT);
+    }
+
+    @Test
+    void withdrawAndTransfer_shouldSucceedAfterUnfreeze() {
+        account.setStatus(AccountStatus.ACTIVE);
+        setUpSecurityContextWith(customerUser);
+        when(idempotencyRecordRepository.findByStorageKey(anyString())).thenReturn(Optional.empty());
+        when(accountRepository.findByAccountIdAndDeletedAtIsNull(1001L)).thenReturn(Optional.of(account));
+        when(accountRepository.findByAccountIdAndDeletedAtIsNull(2002L)).thenReturn(Optional.of(toAccount));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(customerUser));
+        when(accountRepository.save(any())).thenReturn(account);
+        when(transactionRepository.save(any())).thenReturn(new Transaction());
+        when(idempotencyRecordRepository.save(any())).thenReturn(new IdempotencyRecord());
+
+        OperationResult withdrawResult = monetaryOperationService.withdraw(
+                1001L,
+                new MonetaryRequest(new BigDecimal("10.00"), "withdraw"),
+                "w-after-unfreeze");
+
+        OperationResult transferResult = monetaryOperationService.transfer(
+                new TransferRequest(1001L, 2002L, new BigDecimal("5.00"), "transfer"),
+                "t-after-unfreeze");
+
+        assertThat(withdrawResult.status()).isEqualTo(HttpStatus.OK);
+        assertThat(transferResult.status()).isEqualTo(HttpStatus.OK);
     }
 
     @Test

@@ -1,10 +1,18 @@
 package com.group1.banking.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.group1.banking.dto.accountcontrol.AccountControlActionResponse;
+import com.group1.banking.dto.accountcontrol.AccountControlHistoryEventResponse;
+import com.group1.banking.dto.accountcontrol.AccountControlHistoryResponse;
+import com.group1.banking.dto.accountcontrol.FreezeAccountRequest;
+import com.group1.banking.dto.accountcontrol.UnfreezeAccountRequest;
 import com.group1.banking.dto.customer.*;
 import com.group1.banking.entity.AccountStatus;
 import com.group1.banking.entity.AccountType;
+import com.group1.banking.entity.accountcontrol.AccountControlActionType;
 import com.group1.banking.exception.ResourceNotFoundException;
+import com.group1.banking.exception.ForbiddenException;
+import com.group1.banking.exception.UnauthorisedException;
 import com.group1.banking.service.impl.AccountService;
 import com.group1.banking.repository.UserRepository;
 import com.group1.banking.security.JwtService;
@@ -241,6 +249,113 @@ class AccountControllerTest {
         mockMvc.perform(post("/accounts/1001/close"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("RRSP account closed successfully"));
+    }
+
+    @Test
+    void freezeAccount_shouldReturn200_whenSuccessful() throws Exception {
+        var request = new FreezeAccountRequest("Fraud review", "SECURITY_REVIEW", null);
+        var response = new AccountControlActionResponse(
+                1001L,
+                AccountStatus.ACTIVE,
+                AccountStatus.FROZEN,
+                AccountControlActionType.FREEZE,
+                Instant.now());
+
+        when(accountService.freezeAccount(eq(1001L), any(FreezeAccountRequest.class))).thenReturn(response);
+
+        mockMvc.perform(post("/accounts/1001/freeze")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.newStatus").value("FROZEN"));
+    }
+
+    @Test
+    void unfreezeAccount_shouldReturn200_whenSuccessful() throws Exception {
+        var request = new UnfreezeAccountRequest("Resolved", "case closed");
+        var response = new AccountControlActionResponse(
+                1001L,
+                AccountStatus.FROZEN,
+                AccountStatus.ACTIVE,
+                AccountControlActionType.UNFREEZE,
+                Instant.now());
+
+        when(accountService.unfreezeAccount(eq(1001L), any(UnfreezeAccountRequest.class))).thenReturn(response);
+
+        mockMvc.perform(post("/accounts/1001/unfreeze")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.newStatus").value("ACTIVE"));
+    }
+
+    @Test
+    void controlHistory_shouldReturn200_whenSuccessful() throws Exception {
+        var event = new AccountControlHistoryEventResponse(
+                1L,
+                AccountControlActionType.FREEZE,
+                AccountStatus.ACTIVE,
+                AccountStatus.FROZEN,
+                "admin-1",
+                "ADMIN",
+                "Fraud review",
+                null,
+                Instant.now());
+
+        when(accountService.getControlHistory(1001L)).thenReturn(new AccountControlHistoryResponse(1001L, List.of(event)));
+
+        mockMvc.perform(get("/accounts/1001/control-history"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accountId").value(1001L))
+                .andExpect(jsonPath("$.events[0].actionType").value("FREEZE"));
+    }
+
+    @Test
+    void freezeAccount_shouldReturn401_whenUnauthorized() throws Exception {
+        var request = new FreezeAccountRequest("Fraud review", "SECURITY_REVIEW", null);
+        when(accountService.freezeAccount(eq(1001L), any(FreezeAccountRequest.class)))
+                .thenThrow(new UnauthorisedException("UNAUTHORIZED", "Authenticated user not found"));
+
+        mockMvc.perform(post("/accounts/1001/freeze")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void freezeAccount_shouldReturn403_whenForbidden() throws Exception {
+        var request = new FreezeAccountRequest("Fraud review", "SECURITY_REVIEW", null);
+        when(accountService.freezeAccount(eq(1001L), any(FreezeAccountRequest.class)))
+                .thenThrow(new ForbiddenException("FORBIDDEN", "Only admin users can perform this action"));
+
+        mockMvc.perform(post("/accounts/1001/freeze")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void freezeAccount_shouldReturn403_whenCustomerUserAccesses() throws Exception {
+        var request = new FreezeAccountRequest("Fraud review", "SECURITY_REVIEW", null);
+        when(accountService.freezeAccount(eq(1001L), any(FreezeAccountRequest.class)))
+                .thenThrow(new ForbiddenException("FORBIDDEN", "Only admin users can perform this action"));
+
+        mockMvc.perform(post("/accounts/1001/freeze")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void unfreezeAccount_shouldReturn403_whenForbidden() throws Exception {
+        var request = new UnfreezeAccountRequest("Resolved", "note");
+        when(accountService.unfreezeAccount(eq(1001L), any(UnfreezeAccountRequest.class)))
+                .thenThrow(new ForbiddenException("FORBIDDEN", "Only admin users can perform this action"));
+
+        mockMvc.perform(post("/accounts/1001/unfreeze")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
     }
 }
 

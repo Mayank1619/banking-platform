@@ -15,6 +15,10 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
     List<Account> findAllByCustomerCustomerIdAndDeletedAtIsNullAndStatus(Long customerId, AccountStatus status);
 
+    List<Account> findAllByCustomerCustomerIdAndDeletedAtIsNullAndStatusNot(Long customerId, AccountStatus status);
+
+    List<Account> findAllByDeletedAtIsNull();
+
     boolean existsByCustomerCustomerIdAndDeletedAtIsNullAndStatus(Long customerId, AccountStatus status);
 
     Optional<Account> findByAccountId(Long accountNumber);

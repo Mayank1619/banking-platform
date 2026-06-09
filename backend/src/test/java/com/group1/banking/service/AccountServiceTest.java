@@ -3,6 +3,8 @@ package com.group1.banking.service;
 import com.group1.banking.dto.customer.AccountResponse;
 import com.group1.banking.dto.customer.CreateAccountRequest;
 import com.group1.banking.dto.customer.UpdateAccountRequest;
+import com.group1.banking.dto.accountcontrol.FreezeAccountRequest;
+import com.group1.banking.dto.accountcontrol.UnfreezeAccountRequest;
 import com.group1.banking.entity.*;
 import com.group1.banking.enums.RoleName;
 import com.group1.banking.exception.BadRequestException;
@@ -16,6 +18,7 @@ import com.group1.banking.repository.GicRepository;
 import com.group1.banking.repository.UserRepository;
 import com.group1.banking.security.CustomUserPrincipal;
 import com.group1.banking.service.impl.AccountService;
+import com.group1.banking.service.AccountControlAuditService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,6 +59,9 @@ class AccountServiceTest {
 
     @Mock
     private GicRepository gicRepository;
+
+    @Mock
+    private AccountControlAuditService accountControlAuditService;
 
     @InjectMocks
     private AccountService accountService;
@@ -509,6 +515,83 @@ class AccountServiceTest {
         when(accountRepository.findByAccountIdAndDeletedAtIsNull(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> accountService.closeRrspAccount(999L))
+                .isInstanceOf(NotFoundException.class);
+    }
+
+    @Test
+    void freezeAccount_shouldSucceed_whenAdminAndActiveAccount() {
+        setUpSecurityContextWith(adminUser);
+        when(userRepository.findById(adminUser.getUserId())).thenReturn(Optional.of(adminUser));
+        when(accountRepository.findByAccountIdAndDeletedAtIsNull(1001L)).thenReturn(Optional.of(account));
+        when(accountRepository.save(any(Account.class))).thenReturn(account);
+
+        var response = accountService.freezeAccount(1001L, new FreezeAccountRequest("Fraud review", "SECURITY", null));
+
+        assertThat(response.newStatus()).isEqualTo(AccountStatus.FROZEN);
+        verify(accountControlAuditService).logEvent(eq(1001L), anyString(), anyString(), any(), eq(AccountStatus.ACTIVE), eq(AccountStatus.FROZEN), eq("Fraud review"), isNull());
+    }
+
+    @Test
+    void freezeAccount_shouldRejectMissingReason() {
+        setUpSecurityContextWith(adminUser);
+        when(userRepository.findById(adminUser.getUserId())).thenReturn(Optional.of(adminUser));
+
+        assertThatThrownBy(() -> accountService.freezeAccount(1001L, new FreezeAccountRequest("", null, null)))
+                .isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    void freezeAccount_shouldRejectAlreadyFrozen() {
+        account.setStatus(AccountStatus.FROZEN);
+        setUpSecurityContextWith(adminUser);
+        when(userRepository.findById(adminUser.getUserId())).thenReturn(Optional.of(adminUser));
+        when(accountRepository.findByAccountIdAndDeletedAtIsNull(1001L)).thenReturn(Optional.of(account));
+
+        assertThatThrownBy(() -> accountService.freezeAccount(1001L, new FreezeAccountRequest("Fraud", null, null)))
+                .isInstanceOf(ConflictException.class);
+    }
+
+    @Test
+    void freezeAccount_shouldThrowNotFound_whenAccountDoesNotExist() {
+        setUpSecurityContextWith(adminUser);
+        when(userRepository.findById(adminUser.getUserId())).thenReturn(Optional.of(adminUser));
+        when(accountRepository.findByAccountIdAndDeletedAtIsNull(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> accountService.freezeAccount(999L, new FreezeAccountRequest("Fraud", null, null)))
+                .isInstanceOf(NotFoundException.class);
+    }
+
+    @Test
+    void unfreezeAccount_shouldRejectAlreadyActive() {
+        setUpSecurityContextWith(adminUser);
+        when(userRepository.findById(adminUser.getUserId())).thenReturn(Optional.of(adminUser));
+        when(accountRepository.findByAccountIdAndDeletedAtIsNull(1001L)).thenReturn(Optional.of(account));
+
+        assertThatThrownBy(() -> accountService.unfreezeAccount(1001L, new UnfreezeAccountRequest("done", null)))
+                .isInstanceOf(ConflictException.class);
+    }
+
+    @Test
+    void unfreezeAccount_shouldSucceed_whenFrozen() {
+        account.setStatus(AccountStatus.FROZEN);
+        setUpSecurityContextWith(adminUser);
+        when(userRepository.findById(adminUser.getUserId())).thenReturn(Optional.of(adminUser));
+        when(accountRepository.findByAccountIdAndDeletedAtIsNull(1001L)).thenReturn(Optional.of(account));
+        when(accountRepository.save(any(Account.class))).thenReturn(account);
+
+        var response = accountService.unfreezeAccount(1001L, new UnfreezeAccountRequest("case closed", "note"));
+
+        assertThat(response.newStatus()).isEqualTo(AccountStatus.ACTIVE);
+        verify(accountControlAuditService).logEvent(eq(1001L), anyString(), anyString(), any(), eq(AccountStatus.FROZEN), eq(AccountStatus.ACTIVE), eq("case closed"), eq("note"));
+    }
+
+    @Test
+    void unfreezeAccount_shouldThrowNotFound_whenAccountDoesNotExist() {
+        setUpSecurityContextWith(adminUser);
+        when(userRepository.findById(adminUser.getUserId())).thenReturn(Optional.of(adminUser));
+        when(accountRepository.findByAccountIdAndDeletedAtIsNull(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> accountService.unfreezeAccount(999L, new UnfreezeAccountRequest("ok", null)))
                 .isInstanceOf(NotFoundException.class);
     }
 }
