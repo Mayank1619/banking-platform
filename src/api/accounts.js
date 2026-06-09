@@ -141,3 +141,25 @@ export async function transferBetweenAccounts(payload) {
   );
   return response.data;
 }
+
+export async function freezeAccount(payload) {
+  const response = await accountApiClient.post(`/accounts/${payload.accountId}/freeze`, {
+    reason: payload.reason,
+    reasonCode: payload.reasonCode || null,
+    notes: payload.notes || null
+  });
+  return response.data;
+}
+
+export async function unfreezeAccount(payload) {
+  const response = await accountApiClient.post(`/accounts/${payload.accountId}/unfreeze`, {
+    reason: payload.reason || null,
+    notes: payload.notes || null
+  });
+  return response.data;
+}
+
+export async function getAccountControlHistory(accountId) {
+  const response = await accountApiClient.get(`/accounts/${accountId}/control-history`);
+  return response.data;
+}

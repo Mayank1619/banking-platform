@@ -172,4 +172,45 @@ describe('money movement pages', () => {
     expect(screen.queryByText('debit-json-marker')).not.toBeInTheDocument();
     expect(screen.queryByText('credit-json-marker')).not.toBeInTheDocument();
   });
+
+  it('shows controlled blocked message when withdrawal is blocked on frozen account', async () => {
+    withdrawMutateAsync.mockRejectedValue({
+      response: {
+        status: 409,
+        data: {
+          code: 'ACCOUNT_TEMPORARILY_RESTRICTED',
+          message: 'internal-message-should-not-leak'
+        }
+      }
+    });
+
+    renderWithdrawPage();
+
+    fireEvent.change(screen.getByLabelText('Amount'), { target: { value: '21.50' } });
+    fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Cash out' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Submit Withdrawal' }));
+
+    expect(await screen.findByText('This account is temporarily restricted. Please contact support.')).toBeInTheDocument();
+  });
+
+  it('shows controlled blocked message when transfer is blocked on frozen account', async () => {
+    transferMutateAsync.mockRejectedValue({
+      response: {
+        status: 409,
+        data: {
+          code: 'ACCOUNT_TEMPORARILY_RESTRICTED',
+          message: 'internal-message-should-not-leak'
+        }
+      }
+    });
+
+    renderTransferPage('/accounts/transfer?fromAccountId=10');
+
+    fireEvent.change(screen.getByLabelText('To Account'), { target: { value: '12' } });
+    fireEvent.change(screen.getByLabelText('Amount'), { target: { value: '15.00' } });
+    fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Move funds' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Submit Transfer' }));
+
+    expect(await screen.findByText('This account is temporarily restricted. Please contact support.')).toBeInTheDocument();
+  });
 });

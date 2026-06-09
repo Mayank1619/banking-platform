@@ -6,7 +6,11 @@ import { useAllAccounts } from '../hooks/useAllAccounts';
 const ACCOUNT_TYPES = ['ALL', 'CHEQUING', 'SAVINGS', 'TFSA', 'RRSP'];
 
 function StatusBadge({ status }) {
-  const className = status === 'ACTIVE' ? 'badge badge-active' : 'badge badge-closed';
+  const className = status === 'ACTIVE'
+    ? 'badge badge-active'
+    : status === 'FROZEN'
+      ? 'badge badge-warning'
+      : 'badge badge-closed';
   return <span className={className}>{status}</span>;
 }
 

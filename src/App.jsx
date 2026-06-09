@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink, Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './auth/AuthContext';
+import { AdminRoute } from './auth/AdminRoute';
 import { ProtectedRoute } from './auth/ProtectedRoute';
 import { FeatureGuard } from './components/FeatureGuard';
 import { useListCustomerAccounts } from './hooks/useListCustomerAccounts';
@@ -377,9 +378,10 @@ export default function App() {
         <Route path="/password-reset" element={<PublicOnlyRoute><PasswordResetPage /></PublicOnlyRoute>} />
 
         <Route element={<ProtectedRoute />}> 
-                    {/* Admin-only pages */}
-                    <Route path="/admin/customers" element={<AdminCustomersPage />} />
-                    <Route path="/admin/accounts" element={<AccountAdminListPage />} />
+          <Route element={<AdminRoute />}>
+            <Route path="/admin/customers" element={<AdminCustomersPage />} />
+            <Route path="/admin/accounts" element={<AccountAdminListPage />} />
+          </Route>
           <Route path="/customer/create" element={<CustomerCreatePage />} />
           <Route path="/customer/:customerId" element={<CustomerDetailPage />} />
           <Route path="/customer/:customerId/edit" element={<CustomerEditPage />} />

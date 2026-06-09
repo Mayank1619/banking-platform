@@ -111,6 +111,14 @@ export function mapAxiosError(error) {
   const data = response?.data;
   const validationMessage = firstValidationError(data?.errors);
 
+  if (data?.code === "ACCOUNT_TEMPORARILY_RESTRICTED") {
+    return {
+      code: data.code,
+      message: "This account is temporarily restricted. Please contact support.",
+      field: data.field ?? null,
+    };
+  }
+
   if (data?.code || data?.message) {
     return {
       code: data.code || `HTTP_${response?.status || "UNKNOWN"}`,

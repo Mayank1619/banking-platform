@@ -50,10 +50,10 @@ export function AccountListPage() {
   const [goalActionMessage, setGoalActionMessage] = useState(null);
 
   useEffect(() => {
-    if (customerId) {
+    if (customerId && !isAdmin) {
       getAllGoals(customerId).catch(() => {});
     }
-  }, [customerId, getAllGoals]);
+  }, [customerId, isAdmin, getAllGoals]);
 
   const goalsByAccountId = (goals || []).reduce((map, goal) => {
     map[goal.account_id] = goal;
@@ -240,9 +240,9 @@ export function AccountListPage() {
         <section className="panel stack">
           <div className="page-header-row">
             <div>
-              <h2>My Accounts</h2>
+              <h2>{isAdmin && customerQuery.data?.name ? `${customerQuery.data.name}'s Accounts` : 'My Accounts'}</h2>
               <p className="muted text-top-muted">
-                View and manage your accounts.
+                {isAdmin && customerQuery.data?.name ? `View and manage ${customerQuery.data.name}'s accounts.` : 'View and manage your accounts.'}
               </p>
             </div>
             {!accountsError && !customerError ? (
@@ -303,6 +303,11 @@ export function AccountListPage() {
                             Tax-Free
                           </span>
                         ) : null}
+                        {account.status === "FROZEN" ? (
+                          <span className="badge badge-warning badge-inline-offset">
+                            Frozen
+                          </span>
+                        ) : null}
                       </span>
                       <span className="account-card-id">
                         {account.accountId}
@@ -336,7 +341,7 @@ export function AccountListPage() {
         </section>
 
         {/* Savings Goals Section */}
-        <section className="panel stack">
+        {!isAdmin ? <section className="panel stack">
           <div className="page-header-row">
             <div>
               <h2>Savings Goals</h2>
@@ -398,7 +403,7 @@ export function AccountListPage() {
               })}
             </div>
           ) : null}
-        </section>
+        </section> : null}
         {isCreateModalOpen ? (
           <div className="modal-backdrop" onClick={closeCreateModal}>
             <div

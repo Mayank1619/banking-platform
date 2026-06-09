@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { adminUpdateInterestRate, closeRrspAccount, deleteAccount, getGics, openGic, redeemGic } from '../api/accounts';
+import { adminUpdateInterestRate, closeRrspAccount, deleteAccount, freezeAccount, getAccountControlHistory, getGics, openGic, redeemGic, unfreezeAccount } from '../api/accounts';
 import { mapAxiosError } from '../api/axiosClient';
 import { useAuth } from '../auth/AuthContext';
 import { useGetAccount } from '../hooks/useGetAccount';
@@ -47,6 +47,8 @@ export function AccountDetailPage() {
   const [error, setError] = useState(null);
   const [actionMessage, setActionMessage] = useState(null);
   const [interestRateInput, setInterestRateInput] = useState('');
+  const [freezeReason, setFreezeReason] = useState('');
+  const [releaseNote, setReleaseNote] = useState('');
   const [gicMessage, setGicMessage] = useState(null);
   const [gicError, setGicError] = useState(null);
   const [isGicModalOpen, setIsGicModalOpen] = useState(false);
@@ -57,6 +59,8 @@ export function AccountDetailPage() {
   const openGicMutation = useMutation({ mutationFn: ({ id, payload }) => openGic(id, payload) });
   const redeemGicMutation = useMutation({ mutationFn: ({ id, gicId }) => redeemGic(id, gicId) });
   const adminUpdateMutation = useMutation({ mutationFn: ({ id, rate }) => adminUpdateInterestRate(id, rate) });
+  const freezeMutation = useMutation({ mutationFn: freezeAccount });
+  const unfreezeMutation = useMutation({ mutationFn: unfreezeAccount });
 
   const account = query.data;
   const isRrsp = account?.accountType === 'RRSP';
@@ -65,6 +69,12 @@ export function AccountDetailPage() {
     queryKey: ['gics', accountId],
     queryFn: () => getGics(accountId),
     enabled: isRrsp && Boolean(accountId)
+  });
+
+  const controlHistoryQuery = useQuery({
+    queryKey: ['account-control-history', accountId],
+    queryFn: () => getAccountControlHistory(accountId),
+    enabled: isAdmin && Boolean(accountId)
   });
 
   async function handleDelete() {
@@ -155,6 +165,46 @@ export function AccountDetailPage() {
     }
   }
 
+  async function handleFreezeAccount(event) {
+    event.preventDefault();
+    if (!account || !freezeReason.trim()) return;
+    setError(null);
+    setActionMessage('Freezing account...');
+    try {
+      await freezeMutation.mutateAsync({
+        accountId: account.accountId,
+        reason: freezeReason.trim()
+      });
+      setFreezeReason('');
+      setActionMessage('Account frozen successfully.');
+      queryClient.invalidateQueries({ queryKey: ['account', accountId] });
+      queryClient.invalidateQueries({ queryKey: ['account-control-history', accountId] });
+    } catch (mutationError) {
+      setActionMessage(null);
+      setError(mapAxiosError(mutationError));
+    }
+  }
+
+  async function handleUnfreezeAccount(event) {
+    event.preventDefault();
+    if (!account) return;
+    setError(null);
+    setActionMessage('Unfreezing account...');
+    try {
+      await unfreezeMutation.mutateAsync({
+        accountId: account.accountId,
+        notes: releaseNote.trim() || null
+      });
+      setReleaseNote('');
+      setActionMessage('Account unfrozen successfully.');
+      queryClient.invalidateQueries({ queryKey: ['account', accountId] });
+      queryClient.invalidateQueries({ queryKey: ['account-control-history', accountId] });
+    } catch (mutationError) {
+      setActionMessage(null);
+      setError(mapAxiosError(mutationError));
+    }
+  }
+
   const canDeleteAccount = Number(account?.balance) === 0;
   const queryError = query.error ? mapDeletedAccountError(query.error) : null;
   const gics = Array.isArray(gicQuery.data) ? gicQuery.data
@@ -190,6 +240,10 @@ export function AccountDetailPage() {
             <div className="account-overview-col split">
               <p className="muted account-overview-label">Balance</p>
               <p className="account-overview-value">{account.balance}</p>
+            </div>
+            <div className="account-overview-col split">
+              <p className="muted account-overview-label">Status</p>
+              <p className="account-overview-value">{account.status}</p>
             </div>
           </div>
           <div className="section-divider" />
@@ -299,9 +353,45 @@ export function AccountDetailPage() {
           </div>
           <div className="section-divider" />
           <div>
+            <h4>Account Control</h4>
+            {account.status === 'FROZEN' ? (
+              <form className="stack" onSubmit={handleUnfreezeAccount}>
+                <div className="field">
+                  <label htmlFor="unfreeze-note">Release Note (optional)</label>
+                  <input
+                    id="unfreeze-note"
+                    value={releaseNote}
+                    onChange={(e) => setReleaseNote(e.target.value)}
+                    placeholder="Case resolved"
+                  />
+                </div>
+                <div className="actions">
+                  <button type="submit" disabled={unfreezeMutation.isPending}>Unfreeze Account</button>
+                </div>
+              </form>
+            ) : (
+              <form className="stack" onSubmit={handleFreezeAccount}>
+                <div className="field">
+                  <label htmlFor="freeze-reason">Freeze Reason</label>
+                  <input
+                    id="freeze-reason"
+                    value={freezeReason}
+                    onChange={(e) => setFreezeReason(e.target.value)}
+                    placeholder="Suspected account takeover"
+                    required
+                  />
+                </div>
+                <div className="actions">
+                  <button type="submit" disabled={freezeMutation.isPending || !freezeReason.trim()}>Freeze Account</button>
+                </div>
+              </form>
+            )}
+          </div>
+          <div className="section-divider" />
+          <div>
             <h4>Delete Account</h4>
             <p className="muted compact-text">Permanently remove this account. This action cannot be undone.</p>
-            <div className="actions">
+            <div className="actions" style={{ marginTop: "16px" }}>
               <button
                 type="button"
                 className="secondary danger"
@@ -311,6 +401,23 @@ export function AccountDetailPage() {
                 Delete Account
               </button>
             </div>
+          </div>
+          <div className="section-divider" />
+          <div>
+            <h4>Account Control History</h4>
+            {controlHistoryQuery.isLoading ? <p className="muted compact-text">Loading control history...</p> : null}
+            {!controlHistoryQuery.isLoading && (controlHistoryQuery.data?.events || []).length === 0 ? (
+              <p className="muted compact-text">No freeze/unfreeze events recorded yet.</p>
+            ) : null}
+            {(controlHistoryQuery.data?.events || []).length > 0 ? (
+              <ul className="stack">
+                {controlHistoryQuery.data.events.map((event) => (
+                  <li key={event.eventId} className="muted compact-text">
+                    {event.actionType} {event.previousStatus} to {event.newStatus} at {event.timestamp}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           </div>
         </section>
       ) : null}
