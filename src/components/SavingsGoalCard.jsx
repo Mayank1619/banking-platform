@@ -85,7 +85,9 @@ const SavingsGoalCard = ({
           <div className="detail-row">
             <span className="detail-label">Deadline:</span>
             <span className="detail-value">
-              {new Date(goal.target_date).toLocaleDateString()}
+              {goal.target_date
+                ? new Date(goal.target_date + "T00:00:00").toLocaleDateString()
+                : ""}
             </span>
           </div>
           <div className="detail-row">
