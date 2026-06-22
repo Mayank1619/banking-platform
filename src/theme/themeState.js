@@ -5,18 +5,34 @@ export function normalizeTheme(theme) {
   return theme === 'classic' ? 'classic' : DEFAULT_THEME;
 }
 
-export function readStoredTheme() {
+function getLocalStorage() {
   if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    return window.localStorage ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export function readStoredTheme() {
+  const storage = getLocalStorage();
+
+  if (!storage) {
     return DEFAULT_THEME;
   }
 
-  return normalizeTheme(window.localStorage.getItem(THEME_STORAGE_KEY));
+  return normalizeTheme(storage.getItem(THEME_STORAGE_KEY));
 }
 
 export function writeStoredTheme(theme) {
-  if (typeof window === 'undefined') {
+  const storage = getLocalStorage();
+
+  if (!storage) {
     return;
   }
 
-  window.localStorage.setItem(THEME_STORAGE_KEY, normalizeTheme(theme));
+  storage.setItem(THEME_STORAGE_KEY, normalizeTheme(theme));
 }
