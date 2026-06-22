@@ -2,13 +2,14 @@ package com.group1.banking.controller;
 
 import com.group1.banking.dto.SavingsGoalRequest;
 import com.group1.banking.dto.SavingsGoalResponse;
+import com.group1.banking.exception.PermissionDeniedException;
 import com.group1.banking.service.SavingsGoalService;
 import com.group1.banking.security.CustomUserPrincipal;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -77,10 +78,9 @@ public class SavingsGoalController {
     public ResponseEntity<SavingsGoalResponse> createGoal(
             @PathVariable("account_id") Long accountId,
             @Valid @RequestBody SavingsGoalRequest request,
-            Authentication authentication) {
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
         
-        CustomUserPrincipal userDetails = (CustomUserPrincipal) authentication.getPrincipal();
-        Long customerId = userDetails.getCustomerId();
+        Long customerId = extractPrincipal(principal).getCustomerId();
         
         SavingsGoalResponse response = savingsGoalService.createGoal(customerId, accountId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -105,10 +105,9 @@ public class SavingsGoalController {
     @GetMapping("/accounts/{account_id}")
     public ResponseEntity<SavingsGoalResponse> getGoal(
             @PathVariable("account_id") Long accountId,
-            Authentication authentication) {
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
         
-        CustomUserPrincipal userDetails = (CustomUserPrincipal) authentication.getPrincipal();
-        Long customerId = userDetails.getCustomerId();
+        Long customerId = extractPrincipal(principal).getCustomerId();
         
         // Note: In a real implementation, we'd validate account ownership here
         // For now, the service validates goal ownership
@@ -133,10 +132,9 @@ public class SavingsGoalController {
     @GetMapping("/customers/{customer_id}")
     public ResponseEntity<List<SavingsGoalResponse>> getAllGoals(
             @PathVariable("customer_id") Long customerId,
-            Authentication authentication) {
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
         
-        CustomUserPrincipal userDetails = (CustomUserPrincipal) authentication.getPrincipal();
-        Long authenticatedCustomerId = userDetails.getCustomerId();
+        Long authenticatedCustomerId = extractPrincipal(principal).getCustomerId();
         
         // Verify ownership
         if (!customerId.equals(authenticatedCustomerId)) {
@@ -175,10 +173,9 @@ public class SavingsGoalController {
             @PathVariable("account_id") Long accountId,
             @PathVariable("goal_id") Long goalId,
             @Valid @RequestBody SavingsGoalRequest request,
-            Authentication authentication) {
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
         
-        CustomUserPrincipal userDetails = (CustomUserPrincipal) authentication.getPrincipal();
-        Long customerId = userDetails.getCustomerId();
+        Long customerId = extractPrincipal(principal).getCustomerId();
         
         // Note: account_id passed in URL but service validates ownership via customerId + goalId
         SavingsGoalResponse response = savingsGoalService.updateGoal(customerId, goalId, request);
@@ -203,12 +200,18 @@ public class SavingsGoalController {
     public ResponseEntity<Void> deleteGoal(
             @PathVariable("account_id") Long accountId,
             @PathVariable("goal_id") Long goalId,
-            Authentication authentication) {
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
         
-        CustomUserPrincipal userDetails = (CustomUserPrincipal) authentication.getPrincipal();
-        Long customerId = userDetails.getCustomerId();
+        Long customerId = extractPrincipal(principal).getCustomerId();
         
         savingsGoalService.deleteGoal(customerId, goalId);
         return ResponseEntity.noContent().build();
+    }
+
+    private CustomUserPrincipal extractPrincipal(CustomUserPrincipal principal) {
+        if (principal == null) {
+            throw new PermissionDeniedException("AUTHENTICATION");
+        }
+        return principal;
     }
 }
