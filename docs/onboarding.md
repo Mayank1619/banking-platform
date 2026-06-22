@@ -20,6 +20,10 @@ The product currently includes:
 
 The frontend brand shown in the app is Voltio.
 
+For a deeper explanation of the product features, backend security model,
+Spring Security roles, ownership checks, endpoint access rules, and known
+security notes, read [Project Deep Dive](project-deep-dive.md).
+
 ## 2. Technology Stack
 
 Frontend:
@@ -56,6 +60,7 @@ Deployment and operations assets:
 .
 |-- src/                         Frontend React app
 |-- backend/                     Spring Boot backend
+|-- docs/                        Onboarding and project reference documents
 |-- specs/                       Spec Kit feature specs
 |-- SpecFiles/                   Legacy or merged spec documents
 |-- .specify/                    Spec Kit configuration, templates, scripts, workflows

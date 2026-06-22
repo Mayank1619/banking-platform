@@ -5,6 +5,7 @@ Full-stack digital banking project with a React/Vite frontend and a Spring Boot 
 Start here if you are new to the project:
 
 - [Project onboarding guide](docs/onboarding.md)
+- [Project deep dive](docs/project-deep-dive.md)
 - Frontend source: `src/`
 - Backend source: `backend/src/main/java/com/group1/banking/`
 - Feature specs: `specs/` and `SpecFiles/`
