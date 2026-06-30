@@ -31,6 +31,7 @@ steps:
 
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
+    secretEnv: ['JWT_SECRET_VAR']
     args:
       - run
       - deploy
@@ -40,12 +41,14 @@ steps:
       - --platform=managed
       - --allow-unauthenticated
       - --port=8080
-      - --set-env-vars=JWT_SECRET=ThisIsADevOnlySecretKeyForHs256JwtTokenMinimum32Chars
+      - --set-env-vars=JWT_SECRET=$$JWT_SECRET_VAR
 
 availableSecrets:
   secretManager:
     - versionName: projects/gcp-class-14/secrets/sonar-cloud-auth-token/versions/latest
       env: 'SONAR_TOKEN'
+    - versionName: projects/gcp-class-14/secrets/JWT_SECRET/versions/latest
+      env: 'JWT_SECRET_VAR'
 
 options:
   logging: CLOUD_LOGGING_ONLY
