@@ -1,0 +1,99 @@
+<div class="register-page">
+  <div class="register-card stack">
+    <div>
+      <h2>Register</h2>
+    </div>
+
+    <!-- Stepper Navigation Header -->
+    <div class="register-stepper">
+      @if (activeStep() === 1) {
+      <span class="register-step" [class.active]="step() === 'selectType'" [class.completed]="step() !== 'selectType'">
+        1. Account Type
+      </span>
+      }
+      @if (activeStep() === 2) {
+      <span class="register-step" [class.active]="step() === 'details'">
+        2. Details
+      </span>
+      }
+    </div>
+
+    <!-- Error Banner Display -->
+    @if (error()) {
+    <div class="banner error">{{ error() }}</div>
+    }
+
+    <form class="stack" [formGroup]="registerForm" (ngSubmit)="handleSubmit()">
+
+      <!-- Step 1 -->
+      @if (step() === 'selectType') {
+      <div class="form-grid">
+        <div class="field full">
+          <label for="register-type">Account Type</label>
+          <select id="register-type" formControlName="type">
+            @for (type of customerTypes; track type) {
+            <option [value]="type">{{ labels[type] || type }}</option>
+            }
+          </select>
+        </div>
+      </div>
+      }
+
+      <!-- Step 2 -->
+      @else {
+      <div class="stack">
+        <div class="field">
+          <label for="register-username">Email</label>
+          <input id="register-username" type="email" formControlName="username" />
+        </div>
+
+        <div class="field">
+          <label for="register-password">Password</label>
+          <input id="register-password" type="password" formControlName="password" />
+          <p class="field-hint">Minimum 8 characters with uppercase, digit, and special character.</p>
+        </div>
+
+        <div class="field">
+          <label for="register-name">
+            {{ isPerson() ? 'Full Name' : 'Company Name' }}
+          </label>
+          <input id="register-name" formControlName="name" />
+        </div>
+
+        <div class="field">
+          <label for="register-address">Address</label>
+          <input id="register-address" formControlName="address" />
+        </div>
+
+        <!-- Person or Business -->
+        @if (isPerson()) {
+        <div class="field">
+          <label for="register-dob">Date of Birth</label>
+          <input id="register-dob" type="date" formControlName="dateOfBirth" />
+          <p class="field-hint">Required for TFSA accounts. Defaults to 1998-10-26 if left blank.</p>
+        </div>
+        } @else {
+        <div class="field">
+          <label for="register-gbn">Government Business Number</label>
+          <input id="register-gbn" formControlName="governmentBusinessNumber" placeholder="9-digit number"
+            maxLength="9" />
+          <p class="field-hint">9-digit number required for business accounts.</p>
+        </div>
+        }
+      </div>
+      }
+
+      <!-- Bottom Step Navigation Action Bar Buttons -->
+      <div class="actions">
+        @if (step() === 'selectType') {
+        <button type="button" (click)="setStep('details')">Continue</button>
+        <a class="button-link subtle" routerLink="/login">Back to Login</a>
+        } @else {
+        <button type="button" class="secondary" (click)="setStep('selectType')">Back</button>
+        <button type="submit" [disabled]="isPending() || registerForm.invalid">Create Account</button>
+        }
+      </div>
+
+    </form>
+  </div>
+</div>

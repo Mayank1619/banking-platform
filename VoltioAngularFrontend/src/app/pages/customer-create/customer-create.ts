@@ -1,5 +1,5 @@
 import { Component, OnInit, signal } from '@angular/core';
-import { Customer, type } from '../../models/customer';
+import { Customer, type } from '../../core/models/customer';
 import { MOCK_CUSTOMERS } from '../../mock-data/customer_for_admin';
 import { FormsModule } from '@angular/forms';
 

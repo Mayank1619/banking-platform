@@ -35,7 +35,7 @@ export class AuthApiService {
 
     return this.http.post<UserResponse>(
 
-      `${this.backendBaseUrl}/api/auth/register`,
+      `${this.backendBaseUrl}api/auth/register`,
 
       payload
 
@@ -56,7 +56,7 @@ export class AuthApiService {
 
     return this.http.post<AuthResponse>(
 
-      `${this.backendBaseUrl}/api/auth/login`,
+      `${this.backendBaseUrl}api/auth/login`,
 
       payload
 

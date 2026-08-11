@@ -1,0 +1,34 @@
+<section class="panel stack auth-panel-page">
+    <div>
+        <h2>Login</h2>
+        <p class="muted">Authenticate with the merged backend and store the access token for protected requests.</p>
+    </div>
+
+    <!-- Handles registration success message -->
+    @if (isRegistered()) {
+    <div class="banner success">Registration complete. You can now sign in.</div>
+    }
+
+    <!-- Handles API submission errors -->
+    @if (error()) {
+    <div class="banner error">{{ error() }}</div>
+    }
+
+    <form class="stack" [formGroup]="loginForm" (ngSubmit)="handleSubmit()">
+        <div class="field">
+            <label htmlFor="login-username">Email</label>
+            <input id="login-username" type="email" formControlName="username" />
+        </div>
+
+        <div class="field">
+            <label htmlFor="login-password">Password</label>
+            <input id="login-password" type="password" formControlName="password" />
+        </div>
+
+        <div class="actions">
+            <button type="submit" [disabled]="isPending() || loginForm.invalid">Sign In</button>
+            <a class="button-link subtle" routerLink="/register">Register</a>
+            <a class="button-link subtle" routerLink="/password-reset">Password Reset</a>
+        </div>
+    </form>
+</section>

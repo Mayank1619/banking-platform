@@ -1,4 +1,4 @@
-import { Customer, type, role } from '../models/customer';
+import { Customer, type, role } from '../core/models/customer';
 
 export const MOCK_CUSTOMERS: Customer[] = [
   {

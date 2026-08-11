@@ -2,14 +2,13 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
 
-export const adminGuard: CanActivateFn = (route, state) => {
+export const homeRedirectGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
   if (authService.getRoles().includes('ADMIN')) {
-    return true; 
+    return router.createUrlTree(['/home/all-accounts'])
   }
 
-  router.navigate(['/home/dashboard']);
-  return false; 
+  return router.createUrlTree(['/home/dashboard']);
 };

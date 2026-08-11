@@ -5,5 +5,5 @@ export const environment = {
         (window as any).env?.VITE_BANKING_API_BASE_URL ||
         (window as any).env?.VITE_LOGIN_API_BASE_URL ||
         (window as any).env?.VITE_ACCOUNT_SERVICE_BASE_URL ||
-        '/'
+        ''
 };

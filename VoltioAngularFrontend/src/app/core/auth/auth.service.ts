@@ -12,6 +12,7 @@ import {
 import { AuthApiService } from '../services/auth-api.service';
 
 import { AuthStorageService } from './auth-storage.service';
+import { JwtService } from './jwt.service';
 
 
 @Injectable({
@@ -24,9 +25,11 @@ export class AuthService {
 
     private authApi: AuthApiService,
 
-    private authStorage: AuthStorageService
+    private authStorage: AuthStorageService,
 
-  ) {}
+    private jwtService: JwtService
+
+  ) { }
 
 
 
@@ -102,5 +105,12 @@ export class AuthService {
     return this.authStorage.getAccessToken();
 
   }
+
+  getRoles(): string[] {
+
+    return this.jwtService.getRoles();
+  
+  }
+
 
 }
