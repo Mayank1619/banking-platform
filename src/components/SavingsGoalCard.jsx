@@ -53,6 +53,21 @@ const SavingsGoalCard = ({
     return theme === "neon" ? "goal-card-neon" : "goal-card-classic";
   };
 
+  const getRecommendedContribution = () => {
+    const remainingAmount = Math.max(
+      0,
+      goal.target_amount - (goal.current_balance || 0),
+    );
+
+    if (remainingAmount === 0 || goal.time_remaining_days <= 0) {
+      return 0;
+    }
+
+    const monthsRemaining = goal.time_remaining_days / 30.44;
+    return remainingAmount / monthsRemaining;
+  };
+
+  const recommendedContribution = getRecommendedContribution();
   return (
     <div className={`goal-card ${getThemeClass()}`}>
       <div className="card-header">
@@ -76,6 +91,22 @@ const SavingsGoalCard = ({
         />
 
         <div className="goal-details">
+          <div className="detail-row">
+            <span className="detail-label">Time Remaining:</span>
+            <span className="detail-value">
+              {goal.time_remaining_days > 0
+                ? `${goal.time_remaining_days} days`
+                : "Past deadline"}
+            </span>
+          </div>
+
+          {/* Add this new block for the Recommended Contribution */}
+          <div className="detail-row">
+            <span className="detail-label">Recommended (Monthly):</span>
+            <span className="detail-value">
+              ${recommendedContribution.toFixed(2)} / mo
+            </span>
+          </div>
           <div className="detail-row">
             <span className="detail-label">Target:</span>
             <span className="detail-value">
