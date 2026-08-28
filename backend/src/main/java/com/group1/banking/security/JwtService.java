@@ -3,10 +3,9 @@ package com.group1.banking.security;
 import com.group1.banking.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.stereotype.Service; 
+import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -38,20 +37,20 @@ public class JwtService {
         claims.put("roles", user.getRoles().stream().map(Enum::name).toList());
         claims.put("customerId", user.getCustomerId());
         return Jwts.builder()
-            .setClaims(claims)
-            .setSubject(user.getUserId().toString())
-            .setIssuedAt(new Date())
-            .setExpiration(new Date(System.currentTimeMillis() + expirySeconds * 1000L))
-            .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+            .claims(claims)
+            .subject(user.getUserId().toString())
+            .issuedAt(new Date())
+            .expiration(new Date(System.currentTimeMillis() + expirySeconds * 1000L))
+            .signWith(getSigningKey())
             .compact();
     }
 
     public Claims extractAllClaims(String token) {
-        return Jwts.parserBuilder()
-            .setSigningKey(getSigningKey())
-                .build()
-            .parseClaimsJws(token)
-            .getBody();
+        return Jwts.parser()
+            .verifyWith(getSigningKey())
+            .build()
+            .parseSignedClaims(token)
+            .getPayload();
     }
 
     public UUID extractUserId(String token) {

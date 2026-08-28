@@ -1,6 +1,6 @@
 package com.group1.banking.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.group1.banking.dto.common.ErrorResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,9 +15,9 @@ import java.io.IOException;
 @Component
 public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
-    public CustomAuthenticationEntryPoint(ObjectMapper objectMapper) {
+    public CustomAuthenticationEntryPoint(JsonMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 

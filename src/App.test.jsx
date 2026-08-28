@@ -40,6 +40,8 @@ vi.mock('./hooks/useListCustomerAccounts', () => ({
 
 vi.mock('./auth/ProtectedRoute', () => ({ ProtectedRoute: () => null }));
 
+vi.mock('./components/ChatWidget', () => ({ ChatWidget: () => null }));
+
 vi.mock('./pages/HomePage', () => ({ HomePage: () => null }));
 vi.mock('./pages/LoginPage', () => ({ LoginPage: () => null }));
 vi.mock('./pages/RegisterPage', () => ({ RegisterPage: () => null }));

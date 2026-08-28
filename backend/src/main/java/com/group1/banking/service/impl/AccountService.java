@@ -98,8 +98,10 @@ public class AccountService {
         }
         checkAuthorization(user, customerId);
         List<Account> accounts = isAdmin(user)
-                ? accountRepository.findAllByCustomerCustomerIdAndDeletedAtIsNullAndStatusNot(customerId, AccountStatus.CLOSED)
-                : accountRepository.findAllByCustomerCustomerIdAndDeletedAtIsNullAndStatus(customerId, AccountStatus.ACTIVE);
+                ? accountRepository.findAllByCustomerCustomerIdAndDeletedAtIsNullAndStatusNot(customerId,
+                        AccountStatus.CLOSED)
+                : accountRepository.findAllByCustomerCustomerIdAndDeletedAtIsNullAndStatus(customerId,
+                        AccountStatus.ACTIVE);
         return accounts.stream()
                 .map(AccountResponse::from)
                 .toList();
@@ -110,15 +112,18 @@ public class AccountService {
         User user = getAuthenticatedUser();
         assertAdmin(user);
         if (request == null || request.reason() == null || request.reason().isBlank()) {
-            throw new BadRequestException("MISSING_FREEZE_REASON", "Freeze reason is required", Map.of("field", "reason"));
+            throw new BadRequestException("MISSING_FREEZE_REASON", "Freeze reason is required",
+                    Map.of("field", "reason"));
         }
 
         Account account = loadAccount(accountId);
         if (account.getStatus() == AccountStatus.FROZEN) {
-            throw new ConflictException("ACCOUNT_ALREADY_FROZEN", "Account is already frozen", Map.of("accountId", accountId));
+            throw new ConflictException("ACCOUNT_ALREADY_FROZEN", "Account is already frozen",
+                    Map.of("accountId", accountId));
         }
         if (account.getStatus() == AccountStatus.CLOSED) {
-            throw new ConflictException("ACCOUNT_STATUS_NOT_SUPPORTED", "Closed account cannot be frozen", Map.of("accountId", accountId));
+            throw new ConflictException("ACCOUNT_STATUS_NOT_SUPPORTED", "Closed account cannot be frozen",
+                    Map.of("accountId", accountId));
         }
 
         AccountStatus previousStatus = account.getStatus();
@@ -150,10 +155,12 @@ public class AccountService {
 
         Account account = loadAccount(accountId);
         if (account.getStatus() == AccountStatus.ACTIVE) {
-            throw new ConflictException("ACCOUNT_ALREADY_ACTIVE", "Account is already active", Map.of("accountId", accountId));
+            throw new ConflictException("ACCOUNT_ALREADY_ACTIVE", "Account is already active",
+                    Map.of("accountId", accountId));
         }
         if (account.getStatus() == AccountStatus.CLOSED) {
-            throw new ConflictException("ACCOUNT_STATUS_NOT_SUPPORTED", "Closed account cannot be unfrozen", Map.of("accountId", accountId));
+            throw new ConflictException("ACCOUNT_STATUS_NOT_SUPPORTED", "Closed account cannot be unfrozen",
+                    Map.of("accountId", accountId));
         }
 
         String reason = (request != null && request.reason() != null && !request.reason().isBlank())
@@ -206,7 +213,6 @@ public class AccountService {
         return new AccountControlHistoryResponse(accountId, events);
     }
 
-
     @Transactional
     public AccountResponse updateAccount(Long accountId, UpdateAccountRequest request) {
         User user = getAuthenticatedUser();
@@ -218,7 +224,6 @@ public class AccountService {
         }
         return AccountResponse.from(accountRepository.save(account));
     }
-
 
     @Transactional
     public void deleteAccount(Long accountId) {
@@ -238,14 +243,17 @@ public class AccountService {
         BigDecimal interestRate = request.interestRate();
         if (type == AccountType.SAVINGS) {
             if (interestRate == null) {
-                throw new UnprocessableException("MISSING_INTEREST_RATE", "interestRate is required for SAVINGS accounts", "interestRate");
+                throw new UnprocessableException("MISSING_INTEREST_RATE",
+                        "interestRate is required for SAVINGS accounts", "interestRate");
             }
             if (interestRate.scale() > 4 || interestRate.compareTo(BigDecimal.ZERO) < 0) {
-                throw new UnprocessableException("INVALID_INTEREST_RATE", "interestRate must be non-negative with at most 4 decimal places", "interestRate");
+                throw new UnprocessableException("INVALID_INTEREST_RATE",
+                        "interestRate must be non-negative with at most 4 decimal places", "interestRate");
             }
         } else if (type == AccountType.CHECKING) {
             if (interestRate != null) {
-                throw new UnprocessableException("INVALID_INTEREST_RATE", "interestRate is not allowed for CHECKING accounts", "interestRate");
+                throw new UnprocessableException("INVALID_INTEREST_RATE",
+                        "interestRate is not allowed for CHECKING accounts", "interestRate");
             }
         } else if (type == AccountType.TFSA) {
             validateTfsaEligibility(customer, interestRate);
@@ -256,15 +264,18 @@ public class AccountService {
 
     private void validateTfsaEligibility(Customer customer, BigDecimal interestRate) {
         if (interestRate == null) {
-            throw new UnprocessableException("MISSING_INTEREST_RATE", "interestRate is required for TFSA accounts", "interestRate");
+            throw new UnprocessableException("MISSING_INTEREST_RATE", "interestRate is required for TFSA accounts",
+                    "interestRate");
         }
         if (interestRate.scale() > 4 || interestRate.compareTo(BigDecimal.ZERO) < 0) {
-            throw new UnprocessableException("INVALID_INTEREST_RATE", "interestRate must be non-negative with at most 4 decimal places", "interestRate");
+            throw new UnprocessableException("INVALID_INTEREST_RATE",
+                    "interestRate must be non-negative with at most 4 decimal places", "interestRate");
         }
         // Age check (must be 18+)
         LocalDate dob = getCustomerDob(customer);
         if (dob == null || Period.between(dob, LocalDate.now()).getYears() < 18) {
-            throw new UnprocessableException("AGE_REQUIREMENT", "Customer must be at least 18 years old for TFSA", "dateOfBirth");
+            throw new UnprocessableException("AGE_REQUIREMENT", "Customer must be at least 18 years old for TFSA",
+                    "dateOfBirth");
         }
         // KYC check
         if (!isKycVerified(customer)) {
@@ -277,15 +288,17 @@ public class AccountService {
             throw new ConflictException("TFSA_EXISTS", "Customer already has an active TFSA account", null);
         }
         // Contribution room check (placeholder)
-        // throw new UnprocessableException("CONTRIBUTION_ROOM", "Contribution room exceeded", "contributionRoom");
+        // throw new UnprocessableException("CONTRIBUTION_ROOM", "Contribution room
+        // exceeded", "contributionRoom");
     }
 
     private void validateRrspEligibility(Customer customer, BigDecimal interestRate) {
-//        if (interestRate != null) {
-//            throw new UnprocessableException("INVALID_INTEREST_RATE",
-//                    "interestRate is not applicable for RRSP accounts — it is derived from the GIC term",
-//                    "interestRate");
-//        }
+        // if (interestRate != null) {
+        // throw new UnprocessableException("INVALID_INTEREST_RATE",
+        // "interestRate is not applicable for RRSP accounts — it is derived from the
+        // GIC term",
+        // "interestRate");
+        // }
         if (!customer.isKycVerified()) {
             throw new UnprocessableException("KYC_REQUIRED",
                     "Customer must be KYC verified to open an RRSP account", "kyc");
@@ -339,14 +352,17 @@ public class AccountService {
         BigDecimal interestRate = request.interestRate();
         if (type == AccountType.SAVINGS) {
             if (interestRate == null) {
-                throw new UnprocessableException("MISSING_INTEREST_RATE", "interestRate is required for SAVINGS updates", "interestRate");
+                throw new UnprocessableException("MISSING_INTEREST_RATE",
+                        "interestRate is required for SAVINGS updates", "interestRate");
             }
             if (interestRate.compareTo(BigDecimal.ZERO) < 0 || interestRate.scale() > 4) {
-                throw new UnprocessableException("INVALID_INTEREST_RATE", "interestRate must be non-negative with at most 4 decimal places", "interestRate");
+                throw new UnprocessableException("INVALID_INTEREST_RATE",
+                        "interestRate must be non-negative with at most 4 decimal places", "interestRate");
             }
         } else if (type == AccountType.CHECKING) {
             if (interestRate != null) {
-                throw new UnprocessableException("INVALID_INTEREST_RATE", "interestRate is not allowed for CHECKING accounts", "interestRate");
+                throw new UnprocessableException("INVALID_INTEREST_RATE",
+                        "interestRate is not allowed for CHECKING accounts", "interestRate");
             }
         }
     }
@@ -354,22 +370,26 @@ public class AccountService {
     private Account loadActiveAccount(Long accountId) {
         return accountRepository.findByAccountIdAndDeletedAtIsNull(accountId)
                 .filter(existing -> existing.getStatus() == AccountStatus.ACTIVE)
-                .orElseThrow(() -> new NotFoundException("ACCOUNT_NOT_FOUND", "Account not found", Map.of("accountId", accountId)));
+                .orElseThrow(() -> new NotFoundException("ACCOUNT_NOT_FOUND", "Account not found",
+                        Map.of("accountId", accountId)));
     }
 
     private Account loadAccount(Long accountId) {
         return accountRepository.findByAccountIdAndDeletedAtIsNull(accountId)
-                .orElseThrow(() -> new NotFoundException("ACCOUNT_NOT_FOUND", "Account not found", Map.of("accountId", accountId)));
+                .orElseThrow(() -> new NotFoundException("ACCOUNT_NOT_FOUND", "Account not found",
+                        Map.of("accountId", accountId)));
     }
 
     private Customer loadCustomer(Long customerId) {
         return customerRepository.findByCustomerIdAndDeletedAtIsNull(customerId)
-                .orElseThrow(() -> new NotFoundException("CUSTOMER_NOT_FOUND", "Customer not found", Map.of("customerId", customerId)));
+                .orElseThrow(() -> new NotFoundException("CUSTOMER_NOT_FOUND", "Customer not found",
+                        Map.of("customerId", customerId)));
     }
 
     private BigDecimal scaleMoney(BigDecimal value) {
         if (value.scale() > 2) {
-            throw new UnprocessableException("INVALID_BALANCE", "balance must have at most two decimal places", "balance");
+            throw new UnprocessableException("INVALID_BALANCE", "balance must have at most two decimal places",
+                    "balance");
         }
         return value.setScale(2, RoundingMode.UNNECESSARY);
     }
@@ -385,7 +405,7 @@ public class AccountService {
     private String generateAccountNumber(long accountId) {
         return String.format("ACC%010d", accountId);
     }
-    
+
     private User getAuthenticatedUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (!(authentication.getPrincipal() instanceof CustomUserPrincipal principal)) {

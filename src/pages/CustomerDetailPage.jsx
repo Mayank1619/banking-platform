@@ -127,6 +127,7 @@ export function CustomerDetailPage() {
           <div className="actions">
             <Link className="button-link subtle" to={`/customer/${customerId}/edit`}>Edit Customer</Link>
             <Link className="button-link" to={`/customer/${customerId}/accounts`}>Accounts</Link>
+            {isAdmin ?  <Link className="button-link" to={`/admin/${customerId}/risk-assessment`}>Risk Assessment</Link> : null}
             {isAdmin ? <button type="button" className="danger" onClick={handleDelete} disabled={deleteMutation.isPending}>Delete Customer</button> : null}
           </div>
         </section>

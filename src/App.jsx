@@ -3,6 +3,7 @@ import { NavLink, Navigate, Outlet, Route, Routes, useLocation, useNavigate } fr
 import { useAuth } from './auth/AuthContext';
 import { AdminRoute } from './auth/AdminRoute';
 import { ProtectedRoute } from './auth/ProtectedRoute';
+import { ChatWidget } from './components/ChatWidget';
 import { FeatureGuard } from './components/FeatureGuard';
 import { useListCustomerAccounts } from './hooks/useListCustomerAccounts';
 import { AccountDetailPage } from './pages/AccountDetailPage';
@@ -31,6 +32,7 @@ import { useTheme } from './theme/ThemeContext';
 
 import voltioIcon from './images/Voltio_icon.png';
 import voltioIconGreen from './images/Voltio_icon_green.png';
+import { AdminRiskScorePage } from './pages/AdminRiskScorePage';
 
 function getDefaultAuthenticatedRoute(authState) {
   const isAdmin = authState.roles.includes('ADMIN') || authState.roles.includes('ROLE_ADMIN');
@@ -361,6 +363,8 @@ function AppLayout() {
       <main className="content-area">
         <Outlet />
       </main>
+
+      {isAuthenticated && !isAdmin && customerId && <ChatWidget />}
     </div>
   );
 }
@@ -381,6 +385,7 @@ export default function App() {
           <Route element={<AdminRoute />}>
             <Route path="/admin/customers" element={<AdminCustomersPage />} />
             <Route path="/admin/accounts" element={<AccountAdminListPage />} />
+            <Route path="/admin/:customerId/risk-assessment" element={<AdminRiskScorePage/>} />
           </Route>
           <Route path="/customer/create" element={<CustomerCreatePage />} />
           <Route path="/customer/:customerId" element={<CustomerDetailPage />} />

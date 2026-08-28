@@ -17,12 +17,55 @@ const GoalProgressBar = ({
   targetAmount = 0,
   theme = "classic",
 }) => {
+  // Coerce incoming values to numbers when possible (API may send strings)
+  const balanceNum =
+    typeof currentBalance === "number"
+      ? currentBalance
+      : parseFloat(currentBalance) || 0;
+  const targetNum =
+    typeof targetAmount === "number"
+      ? targetAmount
+      : parseFloat(targetAmount) || 0;
+  const progressNum =
+    typeof progressPercentage === "number"
+      ? progressPercentage
+      : parseFloat(progressPercentage) || 0;
+
   // Cap progress at 100%
-  const displayProgress = Math.min(progressPercentage, 100);
+  // Prefer calculating progress client-side from balances when available so
+  // we don't display 100% due to unrelated rounding of a server-provided value.
+  let computedProgress = null; // number
+  if (targetNum > 0) {
+    const balanceCents = Math.round(balanceNum * 100);
+    const targetCents = Math.round(targetNum * 100);
+    if (targetCents > 0) {
+      // percent with two decimals, floored (no rounding up)
+      const percentHundredths = Math.floor(
+        (balanceCents * 10000) / targetCents,
+      );
+      computedProgress = percentHundredths / 100; // e.g. 99.99
+    }
+  }
+
+  const displayProgress = Math.min(
+    computedProgress !== null ? computedProgress : progressNum,
+    100,
+  );
+
+  const percentageText =
+    (computedProgress !== null ? computedProgress : progressNum) >= 100
+      ? "100"
+      : computedProgress !== null
+        ? computedProgress.toFixed(2)
+        : String(progressNum.toFixed(2));
 
   // Determine progress color based on percentage
   const getProgressColor = () => {
-    if (displayProgress === 100) return "var(--color-success, #28a745)";
+    // Use actual balances if available to decide completion state.
+    const isComplete =
+      targetNum > 0 ? balanceNum >= targetNum : progressNum >= 100;
+
+    if (isComplete) return "var(--color-success, #28a745)";
     if (displayProgress >= 75) return "var(--color-warning, #ffc107)";
     if (displayProgress >= 50) return "var(--color-info, #17a2b8)";
     return "var(--color-primary, #007bff)";
@@ -36,9 +79,7 @@ const GoalProgressBar = ({
     <div className={`goal-progress-container ${getThemeClass()}`}>
       <div className="progress-info">
         <span className="progress-label">Progress</span>
-        <span className="progress-percentage">
-          {Math.round(displayProgress)}%
-        </span>
+        <span className="progress-percentage">{percentageText}%</span>
       </div>
 
       <div className="progress-bar-wrapper">
@@ -71,9 +112,9 @@ const GoalProgressBar = ({
 };
 
 GoalProgressBar.propTypes = {
-  progressPercentage: PropTypes.number,
-  currentBalance: PropTypes.number,
-  targetAmount: PropTypes.number,
+  progressPercentage: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  currentBalance: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  targetAmount: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   theme: PropTypes.oneOf(["classic", "neon"]),
 };
 

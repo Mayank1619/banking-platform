@@ -30,6 +30,7 @@ logs/
 **/.mvn/wrapper/maven-wrapper.jar
 
 # IDE
+.claude/
 .idea/
 *.iml
 *.iws
@@ -43,3 +44,4 @@ group123-backend/
 spec_frontend.md
 vite.config.js
 .env
+backend/data/

@@ -23,11 +23,11 @@ import org.springframework.security.test.context.support.WithSecurityContext;
 @Target({ElementType.TYPE, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 @WithSecurityContext(factory = WithCustomUser.Factory.class)
-@interface WithCustomUser {
+public @interface WithCustomUser {
 
     long customerId() default 42L;
 
-    class Factory implements WithSecurityContextFactory<WithCustomUser> {
+    public static class Factory implements WithSecurityContextFactory<WithCustomUser> {
         @Override
         public SecurityContext createSecurityContext(WithCustomUser annotation) {
             User user = new User();

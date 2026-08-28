@@ -1,22 +1,25 @@
 package com.group1.banking.service;
 
-import com.group1.banking.dto.SavingsGoalRequest;
-import com.group1.banking.dto.SavingsGoalResponse;
-import com.group1.banking.entity.*;
-import com.group1.banking.enums.SavingsGoalStatus;
-import com.group1.banking.exception.BusinessException;
-import com.group1.banking.repository.AccountRepository;
-import com.group1.banking.repository.SavingsGoalRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZonedDateTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.group1.banking.dto.SavingsGoalRequest;
+import com.group1.banking.dto.SavingsGoalResponse;
+import com.group1.banking.entity.Account;
+import com.group1.banking.entity.SavingsGoal;
+import com.group1.banking.enums.SavingsGoalStatus;
+import com.group1.banking.exception.BusinessException;
+import com.group1.banking.repository.AccountRepository;
+import com.group1.banking.repository.SavingsGoalRepository;
 
 /**
  * Savings Goal Service
@@ -160,8 +163,7 @@ public class SavingsGoalService {
                 .orElseThrow(() -> new BusinessException("GOAL_NOT_FOUND", 
                     "Goal not found"));
         
-        goal.setDeletedAt(Instant.now());
-        savingsGoalRepository.save(goal);
+          savingsGoalRepository.delete(goal);     
         
         auditService.log(customerId.toString(), "CUSTOMER", "DELETE_SAVINGS_GOAL",
                 "savings_goal", String.valueOf(goalId), "SUCCESS");

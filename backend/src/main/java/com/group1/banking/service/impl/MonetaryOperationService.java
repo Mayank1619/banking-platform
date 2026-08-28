@@ -11,9 +11,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 import com.group1.banking.dto.common.ErrorResponse;
 import com.group1.banking.dto.customer.AccountResponse;
 import com.group1.banking.dto.customer.MonetaryOperationResponse;
@@ -50,12 +50,12 @@ public class MonetaryOperationService {
 	private final TransactionRepository transactionRepository;
 	private final IdempotencyRecordRepository idempotencyRecordRepository;
 	private final AuthService authorizationService;
-	private final ObjectMapper objectMapper;
+	private final JsonMapper objectMapper;
 	private final UserRepository userRepository;
 
 	public MonetaryOperationService(AccountRepository accountRepository, TransactionRepository transactionRepository,
 			IdempotencyRecordRepository idempotencyRecordRepository, AuthService authorizationService,
-			ObjectMapper objectMapper, UserRepository userRepository) {
+			JsonMapper objectMapper, UserRepository userRepository) {
 		this.accountRepository = accountRepository;
 		this.transactionRepository = transactionRepository;
 		this.idempotencyRecordRepository = idempotencyRecordRepository;
@@ -484,7 +484,7 @@ public class MonetaryOperationService {
 	private JsonNode parseBody(String responseBody) {
 		try {
 			return objectMapper.readTree(responseBody);
-		} catch (JsonProcessingException ex) {
+		} catch (JacksonException ex) {
 			throw new IllegalStateException("Unable to deserialize idempotency response", ex);
 		}
 	}
@@ -492,7 +492,7 @@ public class MonetaryOperationService {
 	private String writeBody(Object body) {
 		try {
 			return objectMapper.writeValueAsString(body);
-		} catch (JsonProcessingException ex) {
+		} catch (JacksonException ex) {
 			throw new IllegalStateException("Unable to serialize idempotency response", ex);
 		}
 	}
@@ -526,6 +526,6 @@ public class MonetaryOperationService {
 	}
 
 	private OperationResult unprocessable(String code, String message, String field) {
-		return new OperationResult(HttpStatus.UNPROCESSABLE_ENTITY, new ErrorResponse(code, message, field));
+		return new OperationResult(HttpStatus.UNPROCESSABLE_CONTENT, new ErrorResponse(code, message, field));
 	}
 }

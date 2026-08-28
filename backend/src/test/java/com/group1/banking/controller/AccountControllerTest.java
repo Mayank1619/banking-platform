@@ -1,6 +1,6 @@
 package com.group1.banking.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.group1.banking.dto.accountcontrol.AccountControlActionResponse;
 import com.group1.banking.dto.accountcontrol.AccountControlHistoryEventResponse;
 import com.group1.banking.dto.accountcontrol.AccountControlHistoryResponse;
@@ -19,9 +19,9 @@ import com.group1.banking.security.JwtService;
 import com.group1.banking.service.impl.MonetaryOperationService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -47,18 +47,18 @@ class AccountControllerTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
-    @MockBean
+    @MockitoBean
     private AccountService accountService;
 
-    @MockBean
+    @MockitoBean
     private MonetaryOperationService monetaryOperationService;
 
-    @MockBean
+    @MockitoBean
     private JwtService jwtService;
 
-    @MockBean
+    @MockitoBean
     private UserRepository userRepository;
 
     private AccountResponse sampleAccount() {
@@ -111,7 +111,7 @@ class AccountControllerTest {
         mockMvc.perform(post("/customers/42/accounts")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
-                .andExpect(status().isUnprocessableEntity());
+                .andExpect(status().isUnprocessableContent());
     }
 
     // ===== GET ACCOUNT =====

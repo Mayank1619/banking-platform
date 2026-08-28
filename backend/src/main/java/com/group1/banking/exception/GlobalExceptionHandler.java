@@ -33,7 +33,7 @@ public class GlobalExceptionHandler {
 
         logger.warn("Validation failed: {}", errors);
 
-        return ResponseEntity.unprocessableEntity()
+        return ResponseEntity.unprocessableContent()
                 .body(new ErrorResponse("VALIDATION_FAILED", "Validation failed", errors));
     }
 
