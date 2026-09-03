@@ -70,7 +70,7 @@ class NotificationEvaluationServiceTest {
         when(accountRepository.findById(100L)).thenReturn(Optional.of(account));
         when(notificationDecisionRepository.save(any())).thenReturn(new NotificationDecisionEntity());
         when(mapper.toResponse(any())).thenReturn(response);
-        doNothing().when(auditService).log(any(), any(), any(), any(), any(), any());
+        doNothing().when(auditService).log(any(), any(), any(), any(), any(), any(), any(), any());
 
         request = buildRequest("evt-001", "StandingOrderFailure", 100L, 42L);
     }
@@ -249,6 +249,6 @@ class NotificationEvaluationServiceTest {
         service.evaluateInternal("INVALID_TYPE", 100L, 42L, "2024-06-15T10:00:00", "payload");
 
         // No exception propagated — verify auditService was called for the error
-        verify(auditService, atLeastOnce()).log(any(), any(), any(), any(), any(), any());
+        verify(auditService, atLeastOnce()).log(any(), any(), any(), any(), any(), any(), any(), any());
     }
 }

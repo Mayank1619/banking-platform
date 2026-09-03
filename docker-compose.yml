@@ -1,0 +1,26 @@
+services:
+  # Postgres + pgvector for the Savings Insight Chatbot (RAG).
+  # This is intentionally separate from the app's primary MySQL/H2 datasource -
+  # it only stores the embedded knowledge base and chat interaction logs.
+  pgvector:
+    image: pgvector/pgvector:pg16
+    container_name: banking-pgvector
+    restart: unless-stopped
+    environment:
+      # Sourced from the repo-root .env file (falls back to these defaults if unset,
+      # e.g. when running `docker compose up` without a .env present).
+      POSTGRES_USER: ${CHATBOT_DB_USERNAME:-banking_chat}
+      POSTGRES_PASSWORD: ${CHATBOT_DB_PASSWORD:-banking_chat}
+      POSTGRES_DB: banking_chat
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgvector-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${CHATBOT_DB_USERNAME:-banking_chat} -d banking_chat"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgvector-data:

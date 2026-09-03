@@ -14,6 +14,8 @@ import com.group1.banking.security.CustomUserPrincipal;
 import com.group1.banking.security.OwnershipValidator;
 import com.group1.banking.security.UserPrincipal;
 import com.group1.banking.util.CategoryResolver;
+import com.group1.banking.enums.RoleName;
+import com.group1.banking.entity.AuditEventType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.core.GrantedAuthority;
@@ -136,8 +138,16 @@ public class SpendingInsightService {
         response.setTopTransactions(topTransactions);
         response.setSixMonthTrend(trend);
 
-        auditService.log(caller.getUserId().toString(), resolvePrimaryRole(caller),
-                "INSIGHTS_READ", "ACCOUNT", String.valueOf(accountId), "SUCCESS");
+        com.group1.banking.enums.RoleName actorRole = resolvePrimaryRole(caller).equalsIgnoreCase("BANK_ADMINISTRATOR")
+            ? RoleName.BANK_ADMINISTRATOR : RoleName.RETAIL_CUSTOMER;
+        auditService.log(AuditEventType.INSIGHTS_READ,
+            "insights",
+            actorRole,
+            caller.getUserId().toString(),
+            "ACCOUNT",
+            String.valueOf(accountId),
+            AuditOutcome.SUCCESS,
+            null);
 
         return response;
     }
@@ -183,8 +193,16 @@ public class SpendingInsightService {
 
         List<CategoryBreakdownItem> breakdown = buildBreakdown(eligible, totalDebitSpend);
 
-        auditService.log(caller.getUserId().toString(), resolvePrimaryRole(caller),
-                "TRANSACTION_RECATEGORISE", "TRANSACTION", String.valueOf(transactionId), "SUCCESS");
+        RoleName actorRole2 = resolvePrimaryRole(caller).equalsIgnoreCase("BANK_ADMINISTRATOR")
+            ? RoleName.BANK_ADMINISTRATOR : RoleName.RETAIL_CUSTOMER;
+        auditService.log(AuditEventType.TRANSACTION_RECATEGORISE,
+            "insights",
+            actorRole2,
+            caller.getUserId().toString(),
+            "TRANSACTION",
+            String.valueOf(transactionId),
+            AuditOutcome.SUCCESS,
+            null);
 
         RecategoriseResponse response = new RecategoriseResponse();
         response.setTransactionId(transactionId);
@@ -281,7 +299,7 @@ public class SpendingInsightService {
             .map(GrantedAuthority::getAuthority)
             .anyMatch(authority -> authority.equals("INSIGHTS:READ")
                 || authority.equals("CUSTOMER_READ")
-                || authority.equals("ROLE_ADMIN"));
+                || authority.equals("ROLE_BANK_ADMINISTRATOR"));
         }
 
         private String resolvePrimaryRole(CustomUserPrincipal caller) {

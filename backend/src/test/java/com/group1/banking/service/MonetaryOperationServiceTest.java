@@ -1,6 +1,6 @@
 package com.group1.banking.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.group1.banking.dto.customer.MonetaryRequest;
 import com.group1.banking.dto.customer.OperationResult;
 import com.group1.banking.dto.customer.TransferRequest;
@@ -11,10 +11,10 @@ import com.group1.banking.repository.IdempotencyRecordRepository;
 import com.group1.banking.repository.TransactionRepository;
 import com.group1.banking.repository.UserRepository;
 import com.group1.banking.security.CustomUserPrincipal;
-import com.group1.banking.service.impl.MonetaryOperationService;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import com.group1.banking.service.AuditService;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import com.group1.banking.service.impl.MonetaryOperationService;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -25,6 +25,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.junit.jupiter.api.AfterEach;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -32,8 +33,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -57,8 +57,10 @@ class MonetaryOperationServiceTest {
 
     @InjectMocks
     private MonetaryOperationService monetaryOperationService;
+    @Mock
+    private AuditService auditService;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final JsonMapper objectMapper = JsonMapper.builder().build();
 
     private UUID userId;
     private User customerUser;
@@ -67,26 +69,26 @@ class MonetaryOperationServiceTest {
     private Account account;
     private Account toAccount;
 
-    @BeforeEach
-    void setUp() {
+        @BeforeEach
+        void setUp() {
         // Inject real ObjectMapper - since @InjectMocks won't pick it up properly with @Mock,
         // we need to create service manually or inject via reflection
-        monetaryOperationService = new MonetaryOperationService(
+            monetaryOperationService = new MonetaryOperationService(
                 accountRepository, transactionRepository, idempotencyRecordRepository,
-                authorizationService, objectMapper, userRepository);
+                authorizationService, objectMapper, userRepository, auditService);
 
         userId = UUID.randomUUID();
 
         customerUser = new User();
         customerUser.setUserId(userId);
         customerUser.setCustomerId(42L);
-        customerUser.setRoles(List.of(RoleName.CUSTOMER));
+        customerUser.setRoles(List.of(RoleName.RETAIL_CUSTOMER));
         customerUser.setActive(true);
 
         adminUser = new User();
         adminUser.setUserId(UUID.randomUUID());
         adminUser.setCustomerId(99L);
-        adminUser.setRoles(List.of(RoleName.ADMIN));
+        adminUser.setRoles(List.of(RoleName.BANK_ADMINISTRATOR));
         adminUser.setActive(true);
 
         customer = new Customer();
@@ -233,7 +235,7 @@ class MonetaryOperationServiceTest {
         MonetaryRequest request = new MonetaryRequest(BigDecimal.ZERO, "Test deposit");
         OperationResult result = monetaryOperationService.deposit(1001L, request, "idem-key-5");
 
-        assertThat(result.status()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(result.status()).isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
     }
 
     @Test
@@ -247,7 +249,7 @@ class MonetaryOperationServiceTest {
         MonetaryRequest request = new MonetaryRequest(new BigDecimal("-10.00"), "Test");
         OperationResult result = monetaryOperationService.deposit(1001L, request, "idem-key-6");
 
-        assertThat(result.status()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(result.status()).isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
     }
 
     @Test
@@ -383,7 +385,7 @@ class MonetaryOperationServiceTest {
         MonetaryRequest request = new MonetaryRequest(null, "Test");
         OperationResult result = monetaryOperationService.withdraw(1001L, request, "w-key-5");
 
-        assertThat(result.status()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(result.status()).isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
     }
 
     @Test
@@ -455,7 +457,7 @@ class MonetaryOperationServiceTest {
         TransferRequest request = new TransferRequest(1001L, 1001L, new BigDecimal("30.00"), "Same");
         OperationResult result = monetaryOperationService.transfer(request, "t-key-3");
 
-        assertThat(result.status()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(result.status()).isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
     }
 
     @Test
@@ -554,7 +556,7 @@ class MonetaryOperationServiceTest {
         TransferRequest request = new TransferRequest(1001L, 2002L, new BigDecimal("30.123"), "Test");
         OperationResult result = monetaryOperationService.transfer(request, "t-key-7");
 
-        assertThat(result.status()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(result.status()).isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
     }
 
     @Test

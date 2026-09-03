@@ -12,6 +12,8 @@ import com.group1.banking.repository.StandingOrderRepository;
 import com.group1.banking.security.CustomUserPrincipal;
 import com.group1.banking.security.OwnershipValidator;
 import com.group1.banking.security.UserPrincipal;
+import com.group1.banking.entity.*;
+import com.group1.banking.enums.RoleName;
 import org.springframework.security.core.GrantedAuthority;
 import com.group1.banking.util.CanadianHolidayService;
 import org.springframework.stereotype.Service;
@@ -74,8 +76,28 @@ public class StandingOrderService {
                    "ERR_END_DATE_BEFORE_START", "endDate");
        }
  
-        Account account = accountRepository.findById(req.getPayeeAccount())
-                .orElseThrow(() -> new ResourceNotFoundException("Account not found", "ERR_ACC_NOT_FOUND", Map.of("accountId", String.valueOf(req.getPayeeAccount()))));
+        RoleName actor = resolveRole(caller).equalsIgnoreCase("BANK_ADMINISTRATOR")
+                ? RoleName.BANK_ADMINISTRATOR : RoleName.RETAIL_CUSTOMER;
+
+        String details = accountId + "->" + req.getPayeeAccount();
+
+        Account account;
+        try {
+            account = accountRepository.findById(req.getPayeeAccount())
+                    .orElseThrow(() -> new ResourceNotFoundException("Account not found", "ERR_ACC_NOT_FOUND", Map.of("accountId", String.valueOf(req.getPayeeAccount()))));
+        } catch (ResourceNotFoundException rnfe) {
+            try {
+                auditService.log(AuditEventType.STANDING_ORDER_CREATE,
+                        "standing-orders",
+                        resolveRole(caller).equalsIgnoreCase("BANK_ADMINISTRATOR") ? RoleName.BANK_ADMINISTRATOR : RoleName.RETAIL_CUSTOMER,
+                        caller.getUserId().toString(),
+                        "STANDING_ORDER",
+                        null,
+                        AuditOutcome.DENIED,
+                        details);
+            } catch (Exception ignored) {}
+            throw rnfe;
+        }
  
         // Validate amount <= dailyTransferLimit
         if (req.getAmount().compareTo(account.getDailyTransferLimit()) > 0) {
@@ -92,10 +114,7 @@ public class StandingOrderService {
             throw new SemanticValidationException("Invalid frequency value", "ERR_INVALID_FREQUENCY", "frequency");
         }
  
-        // Validate payeeAccount is an existing internal account
-        accountRepository.findById(req.getPayeeAccount())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Payee account not found in the system", "ERR_PAYEE_NOT_FOUND", Map.of("transactionId", String.valueOf(req.getPayeeAccount()))));
+        // (payee account already validated above)
  
         // Check for duplicate ACTIVE order
         standingOrderRepository.findBySourceAccountIdAndPayeeAccountAndAmountAndFrequencyAndStatus(
@@ -122,10 +141,30 @@ public class StandingOrderService {
         entity.setStatus(StandingOrderStatus.ACTIVE);
         entity.setNextRunDate(nextRunDate);
  
-        standingOrderRepository.save(entity);
- 
-        auditService.log(caller.getUserId().toString(), resolveRole(caller),
-                "STANDING_ORDER_CREATE", "STANDING_ORDER", entity.getStandingOrderId(), "SUCCESS");
+        try {
+            standingOrderRepository.save(entity);
+
+            auditService.log(AuditEventType.STANDING_ORDER_CREATE,
+                    "standing-orders",
+                    actor,
+                    caller.getUserId().toString(),
+                    "STANDING_ORDER",
+                    entity.getStandingOrderId(),
+                    AuditOutcome.SUCCESS,
+                    details);
+        } catch (Exception ex) {
+            try {
+                auditService.log(AuditEventType.STANDING_ORDER_CREATE,
+                        "standing-orders",
+                        actor,
+                        caller.getUserId().toString(),
+                        "STANDING_ORDER",
+                        null,
+                        AuditOutcome.DENIED,
+                        details);
+            } catch (Exception ignored) {}
+            throw ex;
+        }
  
         StandingOrderResponse response = mapper.toResponse(entity);
         response.setMessage("Standing order created successfully.");
@@ -146,8 +185,16 @@ public class StandingOrderService {
                 .map(mapper::toResponse)
                 .collect(Collectors.toList());
  
-        auditService.log(caller.getUserId().toString(), resolveRole(caller),
-                "STANDING_ORDER_LIST", "ACCOUNT", String.valueOf(accountId), "SUCCESS");
+        RoleName actor2 = resolveRole(caller).equalsIgnoreCase("BANK_ADMINISTRATOR")
+            ? RoleName.BANK_ADMINISTRATOR : RoleName.RETAIL_CUSTOMER;
+        auditService.log(AuditEventType.STANDING_ORDER_LIST,
+                "standing-orders",
+                actor2,
+                caller.getUserId().toString(),
+                "ACCOUNT",
+                String.valueOf(accountId),
+                AuditOutcome.SUCCESS,
+                null);
  
         StandingOrderListResponse response = new StandingOrderListResponse();
         response.setAccountId(accountId);
@@ -181,8 +228,16 @@ public class StandingOrderService {
         entity.setStatus(StandingOrderStatus.CANCELLED);
         standingOrderRepository.save(entity);
  
-        auditService.log(caller.getUserId().toString(), resolveRole(caller),
-                "STANDING_ORDER_CANCEL", "STANDING_ORDER", standingOrderId, "SUCCESS");
+        RoleName actor3 = resolveRole(caller).equalsIgnoreCase("BANK_ADMINISTRATOR")
+            ? RoleName.BANK_ADMINISTRATOR : RoleName.RETAIL_CUSTOMER;
+        auditService.log(AuditEventType.STANDING_ORDER_CANCEL,
+                "standing-orders",
+                actor3,
+                caller.getUserId().toString(),
+                "STANDING_ORDER",
+                standingOrderId,
+                AuditOutcome.SUCCESS,
+                null);
  
         return new CancelStandingOrderResponse(standingOrderId, "CANCELLED",
                 "Standing order cancelled successfully.");

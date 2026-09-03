@@ -1,11 +1,14 @@
 package com.group1.banking.service;
 
 import com.group1.banking.entity.AuditLogEntity;
+import com.group1.banking.entity.AuditEventType;
 import com.group1.banking.entity.AccountStatus;
 import com.group1.banking.entity.accountcontrol.AccountControlActionType;
 import com.group1.banking.entity.accountcontrol.AccountControlAuditEvent;
 import com.group1.banking.repository.AccountControlAuditRepository;
 import com.group1.banking.repository.AuditLogRepository;
+import com.group1.banking.enums.RoleName;
+import com.group1.banking.entity.AuditOutcome;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,6 +30,9 @@ class AuditServiceTest {
     @Mock
     private AuditLogRepository auditLogRepository;
 
+    @Mock
+    private com.group1.banking.service.AuditLogWriter auditLogWriter;
+
     @InjectMocks
     private AuditService auditService;
 
@@ -43,35 +49,35 @@ class AuditServiceTest {
     @Test
     void log_shouldSaveAuditRecord_withCorrectFields() {
         ArgumentCaptor<AuditLogEntity> captor = ArgumentCaptor.forClass(AuditLogEntity.class);
-        when(auditLogRepository.save(captor.capture())).thenAnswer(inv -> inv.getArgument(0));
+        when(auditLogWriter.save(captor.capture())).thenAnswer(inv -> inv.getArgument(0));
 
-        auditService.log("user-123", "ADMIN", "LOGIN", "USER", "user-123", "SUCCESS");
+        auditService.log("user-123", "BANK_ADMINISTRATOR", "LOGIN", "USER", "user-123", "SUCCESS");
 
         AuditLogEntity saved = captor.getValue();
         assertThat(saved.getActorId()).isEqualTo("user-123");
-        assertThat(saved.getActorRole()).isEqualTo("ADMIN");
-        assertThat(saved.getAction()).isEqualTo("LOGIN");
-        assertThat(saved.getResourceType()).isEqualTo("USER");
-        assertThat(saved.getResourceId()).isEqualTo("user-123");
-        assertThat(saved.getOutcome()).isEqualTo("SUCCESS");
+        assertThat(saved.getActorType()).isEqualTo(RoleName.BANK_ADMINISTRATOR);
+        assertThat(saved.getEventType()).isEqualTo(AuditEventType.LOGIN);
+        assertThat(saved.getSubjectType()).isEqualTo("USER");
+        assertThat(saved.getSubjectId()).isEqualTo("user-123");
+        assertThat(saved.getOutcome()).isEqualTo(AuditOutcome.SUCCESS);
     }
 
     @Test
     void log_shouldPersistToRepository() {
-        when(auditLogRepository.save(org.mockito.ArgumentMatchers.any())).thenAnswer(inv -> inv.getArgument(0));
+        when(auditLogWriter.save(org.mockito.ArgumentMatchers.any())).thenAnswer(inv -> inv.getArgument(0));
 
         auditService.log("-1", "SYSTEM", "NOTIFICATION_FAILED", "NOTIFICATION", "evt-001", "ERROR");
 
-        verify(auditLogRepository).save(org.mockito.ArgumentMatchers.any(AuditLogEntity.class));
+        verify(auditLogWriter).save(org.mockito.ArgumentMatchers.any(AuditLogEntity.class));
     }
 
     @Test
     void log_shouldAcceptNullValues_withoutException() {
-        when(auditLogRepository.save(org.mockito.ArgumentMatchers.any())).thenAnswer(inv -> inv.getArgument(0));
+        when(auditLogWriter.save(org.mockito.ArgumentMatchers.any())).thenAnswer(inv -> inv.getArgument(0));
 
         auditService.log(null, null, "ACTION", "TYPE", null, null);
 
-        verify(auditLogRepository).save(org.mockito.ArgumentMatchers.any(AuditLogEntity.class));
+        verify(auditLogWriter).save(org.mockito.ArgumentMatchers.any(AuditLogEntity.class));
     }
 
     @Test
@@ -82,7 +88,7 @@ class AuditServiceTest {
         accountControlAuditService.logEvent(
                 1001L,
                 "admin-1",
-                "ADMIN",
+                "BANK_ADMINISTRATOR",
                 AccountControlActionType.FREEZE,
                 AccountStatus.ACTIVE,
                 AccountStatus.FROZEN,
@@ -105,7 +111,7 @@ class AuditServiceTest {
         accountControlAuditService.logEvent(
                 1001L,
                 "admin-1",
-                "ADMIN",
+                "BANK_ADMINISTRATOR",
                 AccountControlActionType.UNFREEZE,
                 AccountStatus.FROZEN,
                 AccountStatus.ACTIVE,

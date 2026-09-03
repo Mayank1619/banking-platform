@@ -8,6 +8,8 @@ import com.group1.banking.exception.SemanticValidationException;
 import com.group1.banking.mapper.NotificationDecisionMapper;
 import com.group1.banking.repository.*;
 import org.springframework.stereotype.Service;
+import com.group1.banking.entity.AuditEventType;
+import com.group1.banking.enums.RoleName;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -126,8 +128,14 @@ public class NotificationEvaluationService {
         entity.setMandatoryOverride(mandatoryOverride);
         notificationDecisionRepository.save(entity);
 
-        auditService.log("-1", "SERVICE", "NOTIFICATION_EVALUATE",
-                "NOTIFICATION", req.getEventId(), "SUCCESS");
+        auditService.log(AuditEventType.NOTIFICATION_EVALUATE,
+            "notifications",
+            RoleName.BANK_ADMINISTRATOR,
+            "-1",
+            "NOTIFICATION",
+            req.getEventId(),
+            AuditOutcome.SUCCESS,
+            null);
 
         return mapper.toResponse(entity);
     }
@@ -147,9 +155,15 @@ public class NotificationEvaluationService {
         try {
             evaluate(req);
         } catch (Exception e) {
-            // Log but do not propagate — scheduler failure notification is best-effort
-            auditService.log("-1", "SYSTEM", "NOTIFICATION_INTERNAL_FAILED",
-                    "NOTIFICATION", eventType, "ERROR");
+                // Log but do not propagate — scheduler failure notification is best-effort
+                auditService.log(AuditEventType.NOTIFICATION_INTERNAL_FAILED,
+                    "notifications",
+                    RoleName.BANK_ADMINISTRATOR,
+                    "-1",
+                    "NOTIFICATION",
+                    eventType,
+                    AuditOutcome.ERROR,
+                    null);
         }
     }
 }

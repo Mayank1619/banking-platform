@@ -1,6 +1,6 @@
 package com.group1.banking.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,7 +19,7 @@ class CustomAuthenticationEntryPointTest {
 
     @BeforeEach
     void setUp() {
-        entryPoint = new CustomAuthenticationEntryPoint(new ObjectMapper());
+        entryPoint = new CustomAuthenticationEntryPoint(JsonMapper.builder().build());
     }
 
     @Test

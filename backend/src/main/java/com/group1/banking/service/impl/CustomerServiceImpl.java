@@ -16,6 +16,7 @@ import com.group1.banking.dto.customer.CustomerResponse;
 import com.group1.banking.dto.customer.PatchCustomerRequest;
 import com.group1.banking.entity.AccountStatus;
 import com.group1.banking.entity.Customer;
+import com.group1.banking.entity.AuditOutcome;
 import com.group1.banking.entity.User;
 import com.group1.banking.exception.BadRequestException;
 import com.group1.banking.exception.ConflictException;
@@ -23,6 +24,9 @@ import com.group1.banking.exception.NotFoundException;
 import com.group1.banking.exception.UnauthorisedException;
 import com.group1.banking.mapper.CustomerMapper;
 import com.group1.banking.repository.AccountRepository;
+import com.group1.banking.service.AuditService;
+import com.group1.banking.entity.AuditEventType;
+import com.group1.banking.enums.RoleName;
 import com.group1.banking.repository.CustomerRepository;
 import com.group1.banking.repository.UserRepository;
 import com.group1.banking.security.AuthenticatedUser;
@@ -37,14 +41,17 @@ public class CustomerServiceImpl implements CustomerService {
     private final CustomerMapper customerMapper;
     private final UserRepository userRepository;
     private final AccountRepository accountRepository;
+    private final AuditService auditService;
 
     public CustomerServiceImpl(CustomerRepository customerRepository,
                                CustomerMapper customerMapper,
-                               UserRepository userRepository, AccountRepository accountRepository) {
+                               UserRepository userRepository, AccountRepository accountRepository,
+                               AuditService auditService) {
         this.customerRepository = customerRepository;
         this.customerMapper = customerMapper;
         this.userRepository = userRepository;
         this.accountRepository = accountRepository;
+        this.auditService = auditService;
     }
 
     @Override
@@ -100,7 +107,34 @@ public class CustomerServiceImpl implements CustomerService {
             customer.setType(request.getType());
         }
 
-        return customerMapper.toResponse(customerRepository.save(customer));
+        Customer saved = customerRepository.save(customer);
+
+        // Audit: profile edited
+        try {
+            var authentication = SecurityContextHolder.getContext().getAuthentication();
+            com.group1.banking.enums.RoleName actorRoleEnum = com.group1.banking.enums.RoleName.RETAIL_CUSTOMER;
+            String actorId = null;
+            if (authentication != null && authentication.getPrincipal() instanceof CustomUserPrincipal principal) {
+                actorId = principal.getUserId().toString();
+                boolean isAdmin = principal.getAuthorities().stream()
+                        .anyMatch(a -> a.getAuthority().equalsIgnoreCase("ROLE_BANK_ADMINISTRATOR") || a.getAuthority().equalsIgnoreCase("BANK_ADMINISTRATOR"));
+                actorRoleEnum = isAdmin ? com.group1.banking.enums.RoleName.BANK_ADMINISTRATOR : com.group1.banking.enums.RoleName.RETAIL_CUSTOMER;
+            }
+            String details = "";
+            if (request.getName() != null) details += "name=" + request.getName() + ";";
+            if (request.getAddress() != null) details += "address=" + request.getAddress() + ";";
+            if (request.getType() != null) details += "type=" + request.getType() + ";";
+                auditService.log(AuditEventType.PROFILE_EDITED,
+                    "customer-service",
+                    actorRoleEnum,
+                    actorId,
+                    "RETAIL_CUSTOMER",
+                    String.valueOf(saved.getCustomerId()),
+                    AuditOutcome.SUCCESS,
+                    details.isEmpty() ? null : details);
+        } catch (Exception ignored) {}
+
+        return customerMapper.toResponse(saved);
     }
 
     @Override
@@ -168,7 +202,7 @@ public class CustomerServiceImpl implements CustomerService {
 
         System.out.println("User Roles"+ user.getRoles());
         boolean isAdmin = user.getRoles().stream()
-                .anyMatch(role -> role.name().equalsIgnoreCase("ADMIN") || role.name().equalsIgnoreCase("ROLE_ADMIN"));
+                .anyMatch(role -> role.name().equalsIgnoreCase("BANK_ADMINISTRATOR") || role.name().equalsIgnoreCase("ROLE_BANK_ADMINISTRATOR"));
 
         if (!isAdmin) {
             throw new UnauthorisedException("UNAUTHORIZED", "User is not an admin.");
@@ -186,5 +220,17 @@ public class CustomerServiceImpl implements CustomerService {
         // 4️⃣ Soft delete
         customer.setDeletedAt(Instant.now());
         customerRepository.save(customer);
+
+        // Audit: customer (user) deleted
+        try {
+                auditService.log(AuditEventType.USER_DELETED,
+                    "customer-service",
+                    RoleName.BANK_ADMINISTRATOR,
+                    userId.toString(),
+                    "RETAIL_CUSTOMER",
+                    String.valueOf(customerId),
+                    AuditOutcome.SUCCESS,
+                    null);
+        } catch (Exception ignored) {}
     }
 }

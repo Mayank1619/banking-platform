@@ -19,6 +19,9 @@ import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import com.group1.banking.entity.AuditEventType;
+import com.group1.banking.entity.AuditOutcome;
+import com.group1.banking.enums.RoleName;
 import java.time.format.DateTimeParseException;
 import java.util.HexFormat;
 import java.util.List;
@@ -80,7 +83,7 @@ public class MonthlyStatementService {
                         "Account not found", "ERR_ACC_NOT_FOUND", null));
 
         // Ownership check
-        boolean isAdmin = hasRole(caller, "ADMIN");
+        boolean isAdmin = hasRole(caller, "BANK_ADMINISTRATOR");
         if (!isAdmin && !caller.getCustomerId().equals(account.getCustomer().getCustomerId())) {
             throw new PermissionDeniedException("ACCOUNT_ACCESS");
         }
@@ -90,9 +93,16 @@ public class MonthlyStatementService {
         return exportCacheRepository.findByAccountIdAndParamHash(accountId, cacheKey)
                 .map(ExportCacheEntity::getPdfData)
                 .orElseGet(() -> {
-                    byte[] pdf = buildAndCachePdf(account, yearMonth, currentMonth, cacheKey);
-                    auditService.log(caller.getUserId().toString(), resolveRole(caller),
-                            "STATEMENT_GENERATED", "STATEMENT", accountId + "/" + period, "SUCCESS");
+                        byte[] pdf = buildAndCachePdf(account, yearMonth, currentMonth, cacheKey);
+                        RoleName actorRole = hasRole(caller, "BANK_ADMINISTRATOR") ? RoleName.BANK_ADMINISTRATOR : RoleName.RETAIL_CUSTOMER;
+                        auditService.log(AuditEventType.STATEMENT_DOWNLOADED,
+                            "statements",
+                            actorRole,
+                            caller.getUserId().toString(),
+                            "STATEMENT",
+                            accountId + "/" + period,
+                            AuditOutcome.SUCCESS,
+                            cacheKey);
                     return pdf;
                 });
     }

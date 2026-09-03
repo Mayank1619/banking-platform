@@ -3,7 +3,7 @@ package com.group1.banking.security;
 import com.group1.banking.dto.common.ErrorResponse;
 import com.group1.banking.entity.User;
 import com.group1.banking.repository.UserRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -24,9 +24,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserRepository userRepository;
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
-    public JwtAuthenticationFilter(JwtService jwtService, UserRepository userRepository, ObjectMapper objectMapper) {
+    public JwtAuthenticationFilter(JwtService jwtService, UserRepository userRepository, JsonMapper objectMapper) {
         this.jwtService = jwtService;
         this.userRepository = userRepository;
         this.objectMapper = objectMapper;

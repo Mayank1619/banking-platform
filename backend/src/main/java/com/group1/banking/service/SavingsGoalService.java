@@ -3,20 +3,24 @@ package com.group1.banking.service;
 import com.group1.banking.dto.SavingsGoalRequest;
 import com.group1.banking.dto.SavingsGoalResponse;
 import com.group1.banking.entity.*;
+import com.group1.banking.entity.AuditOutcome;
 import com.group1.banking.enums.SavingsGoalStatus;
 import com.group1.banking.exception.BusinessException;
 import com.group1.banking.repository.AccountRepository;
 import com.group1.banking.repository.SavingsGoalRepository;
+import com.group1.banking.enums.RoleName;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZonedDateTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+import com.group1.banking.entity.Account;
+import com.group1.banking.entity.SavingsGoal;
 
 /**
  * Savings Goal Service
@@ -89,8 +93,14 @@ public class SavingsGoalService {
         
         SavingsGoal savedGoal = savingsGoalRepository.save(goal);
         
-        auditService.log(customerId.toString(), "CUSTOMER", "CREATE_SAVINGS_GOAL",
-                "savings_goal", String.valueOf(savedGoal.getGoalId()), "SUCCESS");
+        auditService.log(AuditEventType.SAVINGS_GOAL_CREATED,
+            "savings-goals",
+            RoleName.RETAIL_CUSTOMER,
+            customerId.toString(),
+            "SAVINGS_GOAL",
+            String.valueOf(savedGoal.getGoalId()),
+            AuditOutcome.SUCCESS,
+            null);
         
         // 6. Enrich with derived fields and return
         return enrichGoalWithDerivedFields(savedGoal, account);
@@ -145,8 +155,14 @@ public class SavingsGoalService {
         
         SavingsGoal updatedGoal = savingsGoalRepository.save(goal);
         
-        auditService.log(customerId.toString(), "CUSTOMER", "UPDATE_SAVINGS_GOAL",
-                "savings_goal", String.valueOf(goalId), "SUCCESS");
+        auditService.log(AuditEventType.UPDATE_SAVINGS_GOAL,
+            "savings-goals",
+            com.group1.banking.enums.RoleName.RETAIL_CUSTOMER,
+            customerId.toString(),
+            "SAVINGS_GOAL",
+            String.valueOf(goalId),
+            AuditOutcome.SUCCESS,
+            null);
         
         return enrichGoalWithDerivedFields(updatedGoal, updatedGoal.getAccount());
     }
@@ -160,11 +176,16 @@ public class SavingsGoalService {
                 .orElseThrow(() -> new BusinessException("GOAL_NOT_FOUND", 
                     "Goal not found"));
         
-        goal.setDeletedAt(Instant.now());
-        savingsGoalRepository.save(goal);
+          savingsGoalRepository.delete(goal);     
         
-        auditService.log(customerId.toString(), "CUSTOMER", "DELETE_SAVINGS_GOAL",
-                "savings_goal", String.valueOf(goalId), "SUCCESS");
+        auditService.log(AuditEventType.DELETE_SAVINGS_GOAL,
+            "savings-goals",
+            RoleName.RETAIL_CUSTOMER,
+            customerId.toString(),
+            "SAVINGS_GOAL",
+            String.valueOf(goalId),
+            AuditOutcome.SUCCESS,
+            null);
     }
     
     /**

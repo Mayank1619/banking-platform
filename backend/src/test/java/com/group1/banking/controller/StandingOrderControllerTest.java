@@ -1,6 +1,6 @@
 package com.group1.banking.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.group1.banking.dto.request.CreateStandingOrderRequest;
 import com.group1.banking.dto.response.CancelStandingOrderResponse;
 import com.group1.banking.dto.response.StandingOrderListResponse;
@@ -13,9 +13,9 @@ import com.group1.banking.security.JwtService;
 import com.group1.banking.service.StandingOrderService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -39,18 +39,18 @@ class StandingOrderControllerTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
-    @MockBean
+    @MockitoBean
     private StandingOrderService standingOrderService;
 
-    @MockBean
+    @MockitoBean
     private StandingOrderExecutionJob standingOrderExecutionJob;
 
-    @MockBean
+    @MockitoBean
     private JwtService jwtService;
 
-    @MockBean
+    @MockitoBean
     private UserRepository userRepository;
 
     private StandingOrderResponse sampleOrder() {
@@ -105,7 +105,7 @@ class StandingOrderControllerTest {
         mockMvc.perform(post("/accounts/1001/standing-orders")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isUnprocessableEntity());
+                .andExpect(status().isUnprocessableContent());
     }
 
     @Test
@@ -121,7 +121,7 @@ class StandingOrderControllerTest {
         mockMvc.perform(post("/accounts/1001/standing-orders")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isUnprocessableEntity());
+                .andExpect(status().isUnprocessableContent());
     }
 
     @Test
@@ -137,7 +137,7 @@ class StandingOrderControllerTest {
         mockMvc.perform(post("/accounts/1001/standing-orders")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isUnprocessableEntity());
+                .andExpect(status().isUnprocessableContent());
     }
 
     // ===== LIST STANDING ORDERS =====

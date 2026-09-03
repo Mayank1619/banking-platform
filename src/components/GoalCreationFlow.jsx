@@ -83,6 +83,9 @@ const GoalCreationFlow = ({
         newErrors.targetAmount = "Please enter a target amount";
       } else if (parseFloat(formData.targetAmount) <= 0) {
         newErrors.targetAmount = "Target amount must be greater than $0";
+      } else if (formData.targetAmount.split(".")[1]?.length > 2) {
+        newErrors.targetAmount =
+          "Target amount can have up to 2 decimal places";
       }
     } else if (step === 3) {
       if (!formData.targetDate) {

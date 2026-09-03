@@ -1,9 +1,11 @@
 package com.group1.banking.repository;
 
 import com.group1.banking.entity.AuditLogEntity;
+import com.group1.banking.entity.AuditEventType;
+import com.group1.banking.entity.AuditOutcome;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.test.context.TestPropertySource;
 
 import java.util.Optional;
@@ -50,25 +52,25 @@ class AuditLogRepositoryTest {
     @Test
     void save_shouldPersistAllFields() {
         AuditLogEntity log = buildLog("user-004");
-        log.setResourceId("account/1001");
+        log.setSubjectId("account/1001");
         AuditLogEntity saved = repository.save(log);
 
         Optional<AuditLogEntity> found = repository.findById(saved.getLogId());
         assertThat(found).isPresent();
-        assertThat(found.get().getAction()).isEqualTo("TRANSFER");
-        assertThat(found.get().getOutcome()).isEqualTo("SUCCESS");
-        assertThat(found.get().getActorRole()).isEqualTo("CUSTOMER");
-        assertThat(found.get().getResourceType()).isEqualTo("ACCOUNT");
-        assertThat(found.get().getResourceId()).isEqualTo("account/1001");
+        assertThat(found.get().getEventType()).isEqualTo(AuditEventType.FUNDS_TRANSFERRED);
+        assertThat(found.get().getOutcome()).isEqualTo(AuditOutcome.SUCCESS);
+        assertThat(found.get().getActorType()).isEqualTo(com.group1.banking.enums.RoleName.RETAIL_CUSTOMER);
+        assertThat(found.get().getSubjectType()).isEqualTo("ACCOUNT");
+        assertThat(found.get().getSubjectId()).isEqualTo("account/1001");
     }
 
     private AuditLogEntity buildLog(String actorId) {
         AuditLogEntity log = new AuditLogEntity();
         log.setActorId(actorId);
-        log.setActorRole("CUSTOMER");
-        log.setAction("TRANSFER");
-        log.setResourceType("ACCOUNT");
-        log.setOutcome("SUCCESS");
+        log.setActorType(com.group1.banking.enums.RoleName.RETAIL_CUSTOMER);
+        log.setEventType(AuditEventType.FUNDS_TRANSFERRED);
+        log.setSubjectType("ACCOUNT");
+        log.setOutcome(AuditOutcome.SUCCESS);
         return log;
     }
 }

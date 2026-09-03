@@ -1,6 +1,9 @@
 package com.group1.banking.scheduler;
 
 import com.group1.banking.entity.*;
+import com.group1.banking.entity.AuditOutcome;
+import com.group1.banking.entity.AuditEventType;
+import com.group1.banking.enums.RoleName;
 import com.group1.banking.service.AuditService;
 import com.group1.banking.repository.AccountRepository;
 import com.group1.banking.repository.IdempotencyRecordRepository;
@@ -164,8 +167,14 @@ public class StandingOrderExecutionJob {
                 );
             } catch (Exception e) {
                 // Log but do not fail the scheduler
-                auditService.log("-1", "SYSTEM", "NOTIFICATION_FAILED",
-                        "STANDING_ORDER", order.getStandingOrderId(), "ERROR");
+                auditService.log(AuditEventType.NOTIFICATION_FAILED,
+                        "notifications",
+                        RoleName.BANK_ADMINISTRATOR,
+                        "-1",
+                        "STANDING_ORDER",
+                        order.getStandingOrderId(),
+                    AuditOutcome.ERROR,
+                        null);
             }
             return;
         }
@@ -212,8 +221,14 @@ public class StandingOrderExecutionJob {
         order.setStatus(StandingOrderStatus.ACTIVE);
         standingOrderRepository.save(order);
 
-        auditService.log("-1", "SYSTEM", "STANDING_ORDER_EXECUTED",
-                "STANDING_ORDER", order.getStandingOrderId(), "SUCCESS");
+        auditService.log(AuditEventType.STANDING_ORDER_EXECUTED,
+            "standing-orders",
+            RoleName.BANK_ADMINISTRATOR,
+            "-1",
+            "STANDING_ORDER",
+            order.getStandingOrderId(),
+            AuditOutcome.SUCCESS,
+            null);
     }
 
     private LocalDateTime calculateNextRun(StandingOrderEntity order) {

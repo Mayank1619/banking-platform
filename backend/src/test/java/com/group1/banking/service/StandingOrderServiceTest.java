@@ -72,7 +72,7 @@ class StandingOrderServiceTest {
         com.group1.banking.entity.User customerUser = new com.group1.banking.entity.User();
         customerUser.setUserId(UUID.randomUUID());
         customerUser.setCustomerId(42L);
-        customerUser.setRoles(List.of(com.group1.banking.enums.RoleName.CUSTOMER));
+        customerUser.setRoles(List.of(com.group1.banking.enums.RoleName.RETAIL_CUSTOMER));
         customerUser.setActive(true);
         customerPrincipal = new CustomUserPrincipal(customerUser);
 
@@ -113,7 +113,7 @@ class StandingOrderServiceTest {
         when(canadianHolidayService.nextBusinessDay(any())).thenAnswer(inv -> inv.getArgument(0));
         when(standingOrderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(mapper.toResponse(any())).thenReturn(standingOrderResponse);
-        doNothing().when(auditService).log(any(), any(), any(), any(), any(), any());
+        doNothing().when(auditService).log(any(), any(), any(), any(), any(), any(), any(), any());
     }
 
     // ===== create() TESTS =====

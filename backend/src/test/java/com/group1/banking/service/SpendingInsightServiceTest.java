@@ -69,7 +69,7 @@ class SpendingInsightServiceTest {
         customerUser.setUserId(UUID.randomUUID());
         customerUser.setUsername("customer@test.com");
         customerUser.setCustomerId(42L);
-        customerUser.setRoles(List.of(RoleName.CUSTOMER));
+        customerUser.setRoles(List.of(RoleName.RETAIL_CUSTOMER));
         customerUser.setActive(true);
 
         customerPrincipal = new CustomUserPrincipal(customerUser);
@@ -88,7 +88,7 @@ class SpendingInsightServiceTest {
         when(accountRepository.findById(1001L)).thenReturn(Optional.of(account));
         when(transactionQueryRepository.findEligibleForInsights(anyLong(), any(), any(), any(), any()))
                 .thenReturn(List.of());
-        doNothing().when(auditService).log(any(), any(), any(), any(), any(), any());
+        doNothing().when(auditService).log(any(), any(), any(), any(), any(), any(), any(), any());
     }
 
     // ===== getInsights() TESTS =====
@@ -241,7 +241,7 @@ class SpendingInsightServiceTest {
     void getInsights_shouldWork_whenAdminRole() {
         User adminUser = new User();
         adminUser.setUserId(UUID.randomUUID());
-        adminUser.setRoles(List.of(RoleName.ADMIN));
+        adminUser.setRoles(List.of(RoleName.BANK_ADMINISTRATOR));
         adminUser.setActive(true);
         CustomUserPrincipal adminPrincipal = new CustomUserPrincipal(adminUser);
 

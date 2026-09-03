@@ -1,8 +1,8 @@
 package com.group1.banking.integration;
 
 import com.group1.banking.DigitalBankingPlatformApplication;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.HashMap;
 
@@ -10,7 +10,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
@@ -38,7 +38,7 @@ class AuthCustomerIntegrationTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @Test
     void registerLoginCreateCustomerAndGetCustomer_asAdmin_success() throws Exception {
@@ -47,7 +47,7 @@ class AuthCustomerIntegrationTest {
         HashMap<String, Object> registerBody = new HashMap<>();
         registerBody.put("username", "admin@fdmgroup.com");
         registerBody.put("password", "Secure@123");
-        registerBody.put("roles", new String[]{"ADMIN"});
+        registerBody.put("roles", new String[]{"BANK_ADMINISTRATOR"});
 
         String registerResponse = mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -59,7 +59,7 @@ class AuthCustomerIntegrationTest {
 
         JsonNode registerJson = objectMapper.readTree(registerResponse);
         assertThat(registerJson.get("username").asText()).isEqualTo("admin@fdmgroup.com");
-        assertThat(registerJson.get("roles").get(0).asText()).isEqualTo("ADMIN");
+        assertThat(registerJson.get("roles").get(0).asText()).isEqualTo("BANK_ADMINISTRATOR");
 
         // 2. Login
         HashMap<String, Object> loginBody = new HashMap<>();
@@ -163,7 +163,7 @@ class AuthCustomerIntegrationTest {
         HashMap<String, Object> registerBody = new HashMap<>();
         registerBody.put("username", "admin2@fdmgroup.com");
         registerBody.put("password", "Secure@123");
-        registerBody.put("roles", new String[]{"ADMIN"});
+        registerBody.put("roles", new String[]{"BANK_ADMINISTRATOR"});
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -221,7 +221,7 @@ class AuthCustomerIntegrationTest {
         HashMap<String, Object> registerBody = new HashMap<>();
         registerBody.put("username", "admin3@fdmgroup.com");
         registerBody.put("password", "Secure@123");
-        registerBody.put("roles", new String[]{"ADMIN"});
+        registerBody.put("roles", new String[]{"BANK_ADMINISTRATOR"});
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)

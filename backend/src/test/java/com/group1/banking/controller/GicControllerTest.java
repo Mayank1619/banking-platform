@@ -1,6 +1,6 @@
 package com.group1.banking.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.group1.banking.dto.gic.CreateGicRequest;
 import com.group1.banking.dto.gic.GicResponse;
 import com.group1.banking.dto.gic.RedeemGicResponse;
@@ -13,9 +13,9 @@ import com.group1.banking.security.JwtService;
 import com.group1.banking.service.impl.GicService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -48,15 +48,15 @@ class GicControllerTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
-    @MockBean
+    @MockitoBean
     private GicService gicService;
 
-    @MockBean
+    @MockitoBean
     private JwtService jwtService;
 
-    @MockBean
+    @MockitoBean
     private UserRepository userRepository;
 
     private GicResponse sampleGicResponse() {
@@ -100,7 +100,7 @@ class GicControllerTest {
         mockMvc.perform(post("/accounts/1001/gic")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
-                .andExpect(status().isUnprocessableEntity());
+                .andExpect(status().isUnprocessableContent());
     }
 
     @Test
@@ -110,7 +110,7 @@ class GicControllerTest {
         mockMvc.perform(post("/accounts/1001/gic")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
-                .andExpect(status().isUnprocessableEntity());
+                .andExpect(status().isUnprocessableContent());
     }
 
     @Test
@@ -120,7 +120,7 @@ class GicControllerTest {
         mockMvc.perform(post("/accounts/1001/gic")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isUnprocessableEntity());
+                .andExpect(status().isUnprocessableContent());
     }
 
     @Test

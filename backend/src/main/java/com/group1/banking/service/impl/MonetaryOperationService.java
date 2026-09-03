@@ -11,9 +11,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 import com.group1.banking.dto.common.ErrorResponse;
 import com.group1.banking.dto.customer.AccountResponse;
 import com.group1.banking.dto.customer.MonetaryOperationResponse;
@@ -37,6 +37,10 @@ import com.group1.banking.repository.UserRepository;
 import com.group1.banking.security.AuthenticatedUser;
 import com.group1.banking.security.CustomUserPrincipal;
 import com.group1.banking.service.AuthService;
+import com.group1.banking.service.AuditService;
+import com.group1.banking.entity.AuditEventType;
+import com.group1.banking.entity.AuditOutcome;
+import com.group1.banking.enums.RoleName;
 
 @Service
 public class MonetaryOperationService {
@@ -50,18 +54,20 @@ public class MonetaryOperationService {
 	private final TransactionRepository transactionRepository;
 	private final IdempotencyRecordRepository idempotencyRecordRepository;
 	private final AuthService authorizationService;
-	private final ObjectMapper objectMapper;
+	private final JsonMapper objectMapper;
 	private final UserRepository userRepository;
+	private final AuditService auditService;
 
 	public MonetaryOperationService(AccountRepository accountRepository, TransactionRepository transactionRepository,
 			IdempotencyRecordRepository idempotencyRecordRepository, AuthService authorizationService,
-			ObjectMapper objectMapper, UserRepository userRepository) {
+			JsonMapper objectMapper, UserRepository userRepository, AuditService auditService) {
 		this.accountRepository = accountRepository;
 		this.transactionRepository = transactionRepository;
 		this.idempotencyRecordRepository = idempotencyRecordRepository;
 		this.authorizationService = authorizationService;
 		this.objectMapper = objectMapper;
 		this.userRepository = userRepository;
+		this.auditService = auditService;
 	}
 
 	
@@ -96,7 +102,7 @@ public class MonetaryOperationService {
 	                    .orElseThrow(() -> new UnauthorisedException("UNAUTHORIZED", "User not found"));
 
 	            boolean isAdmin = user.getRoles().stream()
-	                    .anyMatch(r -> r.name().equalsIgnoreCase("ADMIN") || r.name().equalsIgnoreCase("ROLE_ADMIN"));
+	                    .anyMatch(r -> r.name().equalsIgnoreCase("BANK_ADMINISTRATOR") || r.name().equalsIgnoreCase("ROLE_BANK_ADMINISTRATOR"));
 
 	            if (!isAdmin && !user.getCustomerId().equals(account.getCustomer().getCustomerId())) {
 	                result = unauthorized("UNAUTHORIZED", "You can only deposit into your own account", null);
@@ -122,9 +128,20 @@ public class MonetaryOperationService {
 	                        );
 
 	                        accountRepository.save(account);
-	                        transactionRepository.save(transaction);
+							transactionRepository.save(transaction);
 
-	                        result = ok(new MonetaryOperationResponse(
+							// Audit: deposit made
+							RoleName actorRoleEnum = isAdmin ? RoleName.BANK_ADMINISTRATOR : RoleName.RETAIL_CUSTOMER;
+							auditService.log(AuditEventType.DEPOSIT_MADE,
+								"monetary",
+								actorRoleEnum,
+								userId.toString(),
+								"ACCOUNT",
+								String.valueOf(accountId),
+								AuditOutcome.SUCCESS,
+								"tx:" + transaction.getTransactionId() + ",amount:" + amount.toPlainString());
+
+							result = ok(new MonetaryOperationResponse(
 	                                "Deposit completed successfully",
 	                                AccountResponse.from(account),
 	                                TransactionResponse.from(transaction)
@@ -169,7 +186,7 @@ public class MonetaryOperationService {
 	                    .orElseThrow(() -> new UnauthorisedException("UNAUTHORIZED", "User not found"));
 
 	            boolean isAdmin = user.getRoles().stream()
-	                    .anyMatch(r -> r.name().equalsIgnoreCase("ADMIN") || r.name().equalsIgnoreCase("ROLE_ADMIN"));
+	                    .anyMatch(r -> r.name().equalsIgnoreCase("BANK_ADMINISTRATOR") || r.name().equalsIgnoreCase("ROLE_BANK_ADMINISTRATOR"));
 
 	            if (!isAdmin && !user.getCustomerId().equals(account.getCustomer().getCustomerId())) {
 	                result = unauthorized("UNAUTHORIZED", "You can only withdraw from your own account", null);
@@ -213,9 +230,20 @@ public class MonetaryOperationService {
 	                        );
 
 	                        accountRepository.save(account);
-	                        transactionRepository.save(transaction);
+							transactionRepository.save(transaction);
 
-	                        result = ok(new MonetaryOperationResponse(
+							// Audit: withdrawal made (success)
+							RoleName actorRoleEnum = isAdmin ? RoleName.BANK_ADMINISTRATOR : RoleName.RETAIL_CUSTOMER;
+							auditService.log(AuditEventType.WITHDRAWAL_MADE,
+								"monetary",
+								actorRoleEnum,
+								userId.toString(),
+								"ACCOUNT",
+								String.valueOf(accountId),
+								AuditOutcome.SUCCESS,
+								"tx:" + transaction.getTransactionId() + ",amount:" + amount.toPlainString());
+
+							result = ok(new MonetaryOperationResponse(
 	                                "Withdrawal completed successfully",
 	                                AccountResponse.from(account),
 	                                TransactionResponse.from(transaction)
@@ -279,7 +307,7 @@ public class MonetaryOperationService {
 	            .orElseThrow(() -> new UnauthorisedException("UNAUTHORIZED", "User not found"));
 
 	    boolean isAdmin = user.getRoles().stream()
-	            .anyMatch(r -> r.name().equalsIgnoreCase("ADMIN") || r.name().equalsIgnoreCase("ROLE_ADMIN"));
+	            .anyMatch(r -> r.name().equalsIgnoreCase("BANK_ADMINISTRATOR") || r.name().equalsIgnoreCase("ROLE_BANK_ADMINISTRATOR"));
 
 	    if (!isAdmin && !user.getCustomerId().equals(from.getCustomer().getCustomerId())) {
 	        return persistAndReturn(storageKey, idempotencyKey, userId, TRANSFER,
@@ -338,10 +366,21 @@ public class MonetaryOperationService {
 	            null,
 	            idempotencyKey);
 
-	    accountRepository.save(from);
-	    accountRepository.save(to);
-	    transactionRepository.save(debit);
-	    transactionRepository.save(credit);
+		accountRepository.save(from);
+		accountRepository.save(to);
+		transactionRepository.save(debit);
+		transactionRepository.save(credit);
+
+		// Audit: funds transferred
+		RoleName actorRoleEnum = isAdmin ? RoleName.BANK_ADMINISTRATOR : RoleName.RETAIL_CUSTOMER;
+		auditService.log(AuditEventType.FUNDS_TRANSFERRED,
+			"transfers",
+			actorRoleEnum,
+			userId.toString(),
+			"ACCOUNT",
+			from.getAccountId() + "->" + to.getAccountId(),
+			AuditOutcome.SUCCESS,
+			"debitTx:" + debit.getTransactionId() + ",creditTx:" + credit.getTransactionId() + ",amount:" + amount.toPlainString());
 
 	    return persistAndReturn(storageKey, idempotencyKey, userId, TRANSFER,
 	            ok(new TransferResponse(
@@ -484,7 +523,7 @@ public class MonetaryOperationService {
 	private JsonNode parseBody(String responseBody) {
 		try {
 			return objectMapper.readTree(responseBody);
-		} catch (JsonProcessingException ex) {
+		} catch (JacksonException ex) {
 			throw new IllegalStateException("Unable to deserialize idempotency response", ex);
 		}
 	}
@@ -492,7 +531,7 @@ public class MonetaryOperationService {
 	private String writeBody(Object body) {
 		try {
 			return objectMapper.writeValueAsString(body);
-		} catch (JsonProcessingException ex) {
+		} catch (JacksonException ex) {
 			throw new IllegalStateException("Unable to serialize idempotency response", ex);
 		}
 	}
@@ -526,6 +565,6 @@ public class MonetaryOperationService {
 	}
 
 	private OperationResult unprocessable(String code, String message, String field) {
-		return new OperationResult(HttpStatus.UNPROCESSABLE_ENTITY, new ErrorResponse(code, message, field));
+		return new OperationResult(HttpStatus.UNPROCESSABLE_CONTENT, new ErrorResponse(code, message, field));
 	}
 }

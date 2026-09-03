@@ -61,9 +61,54 @@ describe("SavingsGoalCard", () => {
     expect(screen.getByText("100%")).toBeTruthy();
   });
 
+  it("keeps near-complete goals below 100% and renders one time remaining row", () => {
+    render(
+      <SavingsGoalCard
+        goal={makeGoal({
+          target_amount: 1000,
+          current_balance: 999,
+          progress_percentage: 99.9,
+          time_remaining_days: 30,
+        })}
+      />,
+    );
+
+    expect(screen.getByText("99.90%")).toBeTruthy();
+    expect(screen.queryByText("100%")).toBeNull();
+    expect(screen.getAllByText(/Time Remaining:/i)).toHaveLength(1);
+  });
+
   it("displays time remaining in days", () => {
     render(<SavingsGoalCard goal={makeGoal({ time_remaining_days: 180 })} />);
     expect(screen.getByText(/180 days/)).toBeTruthy();
+  });
+
+  it("caps short-term recommendation to one month", () => {
+    render(
+      <SavingsGoalCard
+        goal={makeGoal({
+          target_amount: 5000,
+          current_balance: 1000,
+          time_remaining_days: 3,
+        })}
+      />,
+    );
+
+    expect(screen.getByText("$4000.00 / mo")).toBeTruthy();
+  });
+
+  it("keeps the recommended monthly contribution above zero when a small amount remains", () => {
+    render(
+      <SavingsGoalCard
+        goal={makeGoal({
+          target_amount: 1001,
+          current_balance: 1000,
+          time_remaining_days: 355653,
+        })}
+      />,
+    );
+
+    expect(screen.getByText("$1.00 / mo")).toBeTruthy();
   });
 
   it('T070 edge case: shows "Past deadline" when time_remaining_days is 0', () => {

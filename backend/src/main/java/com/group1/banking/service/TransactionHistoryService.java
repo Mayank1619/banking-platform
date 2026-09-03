@@ -6,6 +6,8 @@ import com.group1.banking.entity.Account;
 import com.group1.banking.entity.AccountStatus;
 import com.group1.banking.entity.ExportCacheEntity;
 import com.group1.banking.entity.Transaction;
+import com.group1.banking.entity.AuditEventType;
+import com.group1.banking.entity.AuditOutcome;
 import com.group1.banking.exception.BusinessStateException;
 import com.group1.banking.exception.PermissionDeniedException;
 import com.group1.banking.exception.ResourceNotFoundException;
@@ -15,6 +17,7 @@ import com.group1.banking.repository.ExportCacheRepository;
 import com.group1.banking.repository.TransactionQueryRepository;
 import com.group1.banking.security.OwnershipValidator;
 import com.group1.banking.security.UserPrincipal;
+import com.group1.banking.enums.RoleName;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -112,8 +115,20 @@ public class TransactionHistoryService {
         if (account.getStatus() == AccountStatus.CLOSED) {
             Instant closedAt = account.getClosedAt();
             if (closedAt != null && closedAt.isBefore(now.minus(CLOSED_ACCOUNT_WINDOW_DAYS, ChronoUnit.DAYS))) {
-                auditService.log(caller.getUserId(), resolveRole(caller),
-                        "TRANSACTION_HISTORY_FAILED", "ACCOUNT", String.valueOf(accountId), "DENIED");
+                RoleName actorRole;
+                try {
+                    actorRole = RoleName.valueOf(resolveRole(caller));
+                } catch (Exception ex) {
+                    actorRole = RoleName.RETAIL_CUSTOMER;
+                }
+                auditService.log(AuditEventType.TRANSACTION_HISTORY_DENIED,
+                            "transaction-history",
+                            actorRole,
+                            caller.getUserId(),
+                            "ACCOUNT",
+                            String.valueOf(accountId),
+                            AuditOutcome.DENIED,
+                            null);
                 throw new RetentionWindowException(
                         "Account closed and 90-day window has expired", "ERR_RETENTION_WINDOW");
             }
@@ -127,8 +142,20 @@ public class TransactionHistoryService {
                 .map(this::toItemResponse)
                 .collect(Collectors.toList());
 
-        auditService.log(caller.getUserId(), resolveRole(caller),
-                "TRANSACTION_HISTORY", "ACCOUNT", String.valueOf(accountId), "SUCCESS");
+        com.group1.banking.enums.RoleName actorRole2;
+        try {
+            actorRole2 = com.group1.banking.enums.RoleName.valueOf(resolveRole(caller));
+        } catch (Exception ex) {
+            actorRole2 = com.group1.banking.enums.RoleName.RETAIL_CUSTOMER;
+        }
+        auditService.log(com.group1.banking.entity.AuditEventType.TRANSACTION_HISTORY_VIEWED,
+            "transaction-history",
+            actorRole2,
+            caller.getUserId(),
+            "ACCOUNT",
+            String.valueOf(accountId),
+            com.group1.banking.entity.AuditOutcome.SUCCESS,
+            null);
 
         TransactionHistoryResponse response = new TransactionHistoryResponse();
         response.setAccountId(accountId);
@@ -162,8 +189,8 @@ public class TransactionHistoryService {
 
         // Check cache
         return exportCacheRepository.findByAccountIdAndParamHash(accountId, paramHash)
-                .map(ExportCacheEntity::getPdfData)
-                .orElseGet(() -> {
+            .map(ExportCacheEntity::getPdfData)
+            .orElseGet(() -> {
                     List<Transaction> txns =
                             transactionQueryRepository
                                     .findByAccount_AccountIdAndTimestampBetweenOrderByTimestampAsc(
@@ -179,6 +206,21 @@ public class TransactionHistoryService {
                     cache.setParamHash(paramHash);
                     cache.setPdfData(pdfBytes);
                     exportCacheRepository.save(cache);
+                // Audit: transaction history exported
+                com.group1.banking.enums.RoleName actorRoleEnum;
+                try {
+                actorRoleEnum = com.group1.banking.enums.RoleName.valueOf(resolveRole(caller));
+                } catch (Exception ex) {
+                actorRoleEnum = com.group1.banking.enums.RoleName.RETAIL_CUSTOMER;
+                }
+                auditService.log(com.group1.banking.entity.AuditEventType.TRANSACTION_HISTORY_EXPORTED,
+                    "export",
+                    actorRoleEnum,
+                    caller.getUserId(),
+                    "ACCOUNT",
+                    String.valueOf(accountId),
+                    AuditOutcome.SUCCESS,
+                    paramHash);
                     return pdfBytes;
                 });
     }

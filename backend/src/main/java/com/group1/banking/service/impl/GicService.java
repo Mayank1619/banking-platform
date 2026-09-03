@@ -30,6 +30,9 @@ import com.group1.banking.repository.GicRepository;
 import com.group1.banking.repository.UserRepository;
 import com.group1.banking.security.CustomUserPrincipal;
 import com.group1.banking.service.AuditService;
+import com.group1.banking.entity.AuditEventType;
+import com.group1.banking.entity.AuditOutcome;
+import com.group1.banking.enums.RoleName;
 
 @Service
 public class GicService {
@@ -86,13 +89,15 @@ public class GicService {
 
         GicInvestment saved = gicRepository.save(gic);
 
-        auditService.log(
-                user.getUserId().toString(),
-                user.getRoles().isEmpty() ? "UNKNOWN" : user.getRoles().get(0).name(),
-                "GIC_CREATED",
-                "GIC",
-                saved.getGicId(),
-                "SUCCESS");
+        RoleName actorRole = isAdmin(user) ? RoleName.BANK_ADMINISTRATOR : RoleName.RETAIL_CUSTOMER;
+        auditService.log(AuditEventType.GIC_CREATED,
+            "gic",
+            actorRole,
+            user.getUserId().toString(),
+            "GIC",
+            saved.getGicId(),
+            AuditOutcome.SUCCESS,
+            null);
 
         return GicResponse.from(saved);
     }
@@ -139,13 +144,15 @@ public class GicService {
         gic.setDeletedAt(Instant.now());
         gicRepository.save(gic);
 
-        auditService.log(
-                user.getUserId().toString(),
-                user.getRoles().isEmpty() ? "UNKNOWN" : user.getRoles().get(0).name(),
-                "GIC_REDEEMED",
-                "GIC",
-                gic.getGicId(),
-                "SUCCESS");
+        RoleName actorRole2 = isAdmin(user) ? RoleName.BANK_ADMINISTRATOR : RoleName.RETAIL_CUSTOMER;
+        auditService.log(AuditEventType.GIC_REDEEMED,
+            "gic",
+            actorRole2,
+            user.getUserId().toString(),
+            "GIC",
+            gic.getGicId(),
+            AuditOutcome.SUCCESS,
+            null);
 
         return new RedeemGicResponse("GIC redeemed successfully.", payout);
     }
@@ -190,7 +197,7 @@ public class GicService {
 
     private boolean isAdmin(User user) {
         return user.getRoles().stream()
-                .anyMatch(r -> r.name().equalsIgnoreCase("ADMIN") || r.name().equalsIgnoreCase("ROLE_ADMIN"));
+                .anyMatch(r -> r.name().equalsIgnoreCase("BANK_ADMINISTRATOR") || r.name().equalsIgnoreCase("ROLE_BANK_ADMINISTRATOR"));
     }
 
     // endregion

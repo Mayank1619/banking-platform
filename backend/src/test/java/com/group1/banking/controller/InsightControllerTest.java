@@ -1,6 +1,6 @@
 package com.group1.banking.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.group1.banking.dto.request.RecategoriseRequest;
 import com.group1.banking.dto.response.RecategoriseResponse;
 import com.group1.banking.dto.response.SpendingInsightResponse;
@@ -10,9 +10,9 @@ import com.group1.banking.security.JwtService;
 import com.group1.banking.service.SpendingInsightService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -32,15 +32,15 @@ class InsightControllerTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
-    @MockBean
+    @MockitoBean
     private SpendingInsightService spendingInsightService;
 
-    @MockBean
+    @MockitoBean
     private JwtService jwtService;
 
-    @MockBean
+    @MockitoBean
     private UserRepository userRepository;
 
     @Test
@@ -112,7 +112,7 @@ class InsightControllerTest {
         mockMvc.perform(put("/accounts/1001/transactions/tx-001/category")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isUnprocessableEntity());
+                .andExpect(status().isUnprocessableContent());
     }
 
     @Test
@@ -121,6 +121,6 @@ class InsightControllerTest {
         mockMvc.perform(put("/accounts/1001/transactions/tx-001/category")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
-                .andExpect(status().isUnprocessableEntity());
+                .andExpect(status().isUnprocessableContent());
     }
 }

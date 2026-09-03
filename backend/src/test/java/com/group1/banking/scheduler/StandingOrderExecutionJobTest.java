@@ -121,7 +121,7 @@ class StandingOrderExecutionJobTest {
         when(idempotencyRecordRepository.save(any())).thenReturn(new IdempotencyRecord());
         when(standingOrderRepository.save(any())).thenReturn(order);
         when(canadianHolidayService.nextBusinessDay(any())).thenAnswer(inv -> inv.getArgument(0));
-        doNothing().when(auditService).log(any(), any(), any(), any(), any(), any());
+        doNothing().when(auditService).log(any(), any(), any(), any(), any(), any(), any(), any());
 
         job.processOrders();
 
@@ -186,7 +186,7 @@ class StandingOrderExecutionJobTest {
         when(idempotencyRecordRepository.save(any())).thenReturn(new IdempotencyRecord());
         when(standingOrderRepository.save(any())).thenReturn(order);
         when(canadianHolidayService.nextBusinessDay(any())).thenAnswer(inv -> inv.getArgument(0));
-        doNothing().when(auditService).log(any(), any(), any(), any(), any(), any());
+        doNothing().when(auditService).log(any(), any(), any(), any(), any(), any(), any(), any());
 
         job.attemptExecution(order);
 
@@ -210,7 +210,7 @@ class StandingOrderExecutionJobTest {
         when(idempotencyRecordRepository.save(any())).thenReturn(new IdempotencyRecord());
         when(standingOrderRepository.save(any())).thenReturn(order);
         when(canadianHolidayService.nextBusinessDay(any())).thenAnswer(inv -> inv.getArgument(0));
-        doNothing().when(auditService).log(any(), any(), any(), any(), any(), any());
+        doNothing().when(auditService).log(any(), any(), any(), any(), any(), any(), any(), any());
 
         job.attemptExecution(order);
 
@@ -234,7 +234,7 @@ class StandingOrderExecutionJobTest {
             return next.plusMonths(1); // simulate advancing
         });
         when(standingOrderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        doNothing().when(auditService).log(any(), any(), any(), any(), any(), any());
+        doNothing().when(auditService).log(any(), any(), any(), any(), any(), any(), any(), any());
 
         job.attemptExecution(order);
 
@@ -253,7 +253,7 @@ class StandingOrderExecutionJobTest {
         when(transactionQueryRepository.save(any())).thenReturn(new Transaction());
         when(canadianHolidayService.nextBusinessDay(any())).thenAnswer(inv -> inv.getArgument(0));
         when(standingOrderRepository.save(any())).thenReturn(order);
-        doNothing().when(auditService).log(any(), any(), any(), any(), any(), any());
+        doNothing().when(auditService).log(any(), any(), any(), any(), any(), any(), any(), any());
 
         job.attemptExecution(order);
 
@@ -289,7 +289,7 @@ class StandingOrderExecutionJobTest {
         when(idempotencyRecordRepository.save(any())).thenReturn(new IdempotencyRecord());
         when(standingOrderRepository.save(any())).thenReturn(order);
         when(canadianHolidayService.nextBusinessDay(any())).thenAnswer(inv -> inv.getArgument(0));
-        doNothing().when(auditService).log(any(), any(), any(), any(), any(), any());
+        doNothing().when(auditService).log(any(), any(), any(), any(), any(), any(), any(), any());
 
         job.firstAttempt();
 
@@ -334,7 +334,7 @@ class StandingOrderExecutionJobTest {
         when(standingOrderRepository.save(any())).thenReturn(order);
         doNothing().when(notificationEvaluationService).evaluateInternal(
                 anyString(), anyLong(), anyLong(), anyString(), anyString());
-        doNothing().when(auditService).log(any(), any(), any(), any(), any(), any());
+        doNothing().when(auditService).log(any(), any(), any(), any(), any(), any(), any(), any());
 
         job.finalAttempt();
 
@@ -359,7 +359,7 @@ class StandingOrderExecutionJobTest {
         when(idempotencyRecordRepository.save(any())).thenReturn(new IdempotencyRecord());
         when(standingOrderRepository.save(any())).thenReturn(order);
         when(canadianHolidayService.nextBusinessDay(any())).thenAnswer(inv -> inv.getArgument(0));
-        doNothing().when(auditService).log(any(), any(), any(), any(), any(), any());
+        doNothing().when(auditService).log(any(), any(), any(), any(), any(), any(), any(), any());
 
         job.finalAttempt();
 
@@ -394,7 +394,7 @@ class StandingOrderExecutionJobTest {
         when(standingOrderRepository.save(any())).thenReturn(order);
         doNothing().when(notificationEvaluationService).evaluateInternal(
                 anyString(), anyLong(), anyLong(), anyString(), anyString());
-        doNothing().when(auditService).log(any(), any(), any(), any(), any(), any());
+        doNothing().when(auditService).log(any(), any(), any(), any(), any(), any(), any(), any());
 
         job.finalAttempt();
 
@@ -416,7 +416,7 @@ class StandingOrderExecutionJobTest {
         doThrow(new RuntimeException("Notification service down"))
                 .when(notificationEvaluationService).evaluateInternal(
                         anyString(), anyLong(), anyLong(), anyString(), anyString());
-        doNothing().when(auditService).log(any(), any(), any(), any(), any(), any());
+        doNothing().when(auditService).log(any(), any(), any(), any(), any(), any(), any(), any());
 
         // Should not throw — exception is caught gracefully
         job.finalAttempt();
@@ -440,7 +440,7 @@ class StandingOrderExecutionJobTest {
         when(idempotencyRecordRepository.save(any())).thenReturn(new IdempotencyRecord());
         when(canadianHolidayService.nextBusinessDay(any())).thenAnswer(inv -> inv.getArgument(0));
         when(standingOrderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        doNothing().when(auditService).log(any(), any(), any(), any(), any(), any());
+        doNothing().when(auditService).log(any(), any(), any(), any(), any(), any(), any(), any());
 
         job.attemptExecution(order);
 
@@ -462,7 +462,7 @@ class StandingOrderExecutionJobTest {
         when(idempotencyRecordRepository.save(any())).thenReturn(new IdempotencyRecord());
         when(canadianHolidayService.nextBusinessDay(any())).thenAnswer(inv -> inv.getArgument(0));
         when(standingOrderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        doNothing().when(auditService).log(any(), any(), any(), any(), any(), any());
+        doNothing().when(auditService).log(any(), any(), any(), any(), any(), any(), any(), any());
 
         job.attemptExecution(order);
 
@@ -483,7 +483,7 @@ class StandingOrderExecutionJobTest {
         when(idempotencyRecordRepository.save(any())).thenReturn(new IdempotencyRecord());
         when(canadianHolidayService.nextBusinessDay(any())).thenAnswer(inv -> inv.getArgument(0));
         when(standingOrderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        doNothing().when(auditService).log(any(), any(), any(), any(), any(), any());
+        doNothing().when(auditService).log(any(), any(), any(), any(), any(), any(), any(), any());
 
         job.attemptExecution(order);
 

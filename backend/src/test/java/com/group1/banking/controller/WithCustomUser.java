@@ -23,18 +23,18 @@ import org.springframework.security.test.context.support.WithSecurityContext;
 @Target({ElementType.TYPE, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 @WithSecurityContext(factory = WithCustomUser.Factory.class)
-@interface WithCustomUser {
+public @interface WithCustomUser {
 
     long customerId() default 42L;
 
-    class Factory implements WithSecurityContextFactory<WithCustomUser> {
+    public static class Factory implements WithSecurityContextFactory<WithCustomUser> {
         @Override
         public SecurityContext createSecurityContext(WithCustomUser annotation) {
             User user = new User();
             user.setUserId(UUID.randomUUID());
             user.setUsername("test@example.com");
             user.setPasswordHash("hash");
-            user.setRoles(List.of(RoleName.CUSTOMER));
+            user.setRoles(List.of(RoleName.RETAIL_CUSTOMER));
             user.setActive(true);
             user.setCustomerId(annotation.customerId());
 

@@ -63,6 +63,27 @@ describe("GoalCreationFlow", () => {
     });
   });
 
+  it("shows validation error when target amount has more than 2 decimal places", async () => {
+    render(<GoalCreationFlow {...defaultProps} />);
+
+    fireEvent.change(screen.getByRole("combobox"), {
+      target: { value: "Travel" },
+    });
+    fireEvent.click(screen.getByText("Next"));
+
+    await waitFor(() => screen.getByPlaceholderText("0.00"));
+    fireEvent.change(screen.getByPlaceholderText("0.00"), {
+      target: { value: "10.001" },
+    });
+    fireEvent.click(screen.getByText("Next"));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Target amount can have up to 2 decimal places/i),
+      ).toBeTruthy();
+    });
+  });
+
   it("shows validation error when target date is in the past", async () => {
     render(<GoalCreationFlow {...defaultProps} />);
 
